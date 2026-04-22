@@ -20,6 +20,7 @@ import ClassDetails from "./pages/student/ClassDetails";
 import StudentGrades from "./pages/student/Grades";
 import GradeDetails from "./pages/student/GradeDetails";
 import StudentDashboard from "./pages/student/StudentDashboard";
+import AttendanceHistory from "./pages/student/AttendanceHistory";
 
 // Admin
 import Dashboard from "./pages/admin/DashBoard";
@@ -130,6 +131,7 @@ function App() {
 
           <Route path="grade" element={<StudentGrades />} />
           <Route path="grade/:classId" element={<GradeDetails />} />
+          <Route path="attendance" element={<AttendanceHistory />} />
         </Route>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />

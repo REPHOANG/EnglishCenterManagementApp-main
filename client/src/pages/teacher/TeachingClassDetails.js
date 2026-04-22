@@ -1,8 +1,9 @@
 import StudentList from "../teacher/StudentList";
 import Grades from "../teacher/Grades";
+import Attendance from "../../components/teacher/Attendance";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ClipboardPenLine, UsersRound, ArrowLeft, GraduationCap, Calendar, CircleDot, BookOpen } from "lucide-react";
+import { ClipboardPenLine, UsersRound, ArrowLeft, GraduationCap, Calendar, CircleDot, BookOpen, ClipboardCheck } from "lucide-react";
 import axios from "axios";
 
 const card = {
@@ -145,6 +146,7 @@ const TeachingClassDetails = () => {
         {[
           { key: "students", label: "Students", icon: <UsersRound size={15} /> },
           { key: "grades", label: "Grades", icon: <ClipboardPenLine size={15} /> },
+          { key: "attendance", label: "Điểm danh", icon: <ClipboardCheck size={15} /> },
         ].map(tab => (
           <button
             key={tab.key}
@@ -178,6 +180,7 @@ const TeachingClassDetails = () => {
       <div style={card}>
         {activeTab === "students" && <StudentList students={classData?.students} />}
         {activeTab === "grades" && <Grades grades={grades} onGradeUpdate={handleGradeUpdate} />}
+        {activeTab === "attendance" && <Attendance classId={classId} teacherId={teacherId} />}
       </div>
     </div>
   );
