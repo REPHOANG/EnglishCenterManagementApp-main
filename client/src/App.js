@@ -16,6 +16,7 @@ import StudentSchedule from "./pages/student/StudentSchedule";
 import RegisterClass from "./pages/student/RegisterClass";
 import MyClasses from "./pages/student/MyClasses";
 import ClassDetails from "./pages/student/ClassDetails";
+import ClassDocuments from "./pages/student/ClassDocuments";
 
 import StudentGrades from "./pages/student/Grades";
 import GradeDetails from "./pages/student/GradeDetails";
@@ -34,6 +35,7 @@ import LoginPage from "./Login/Login";
 import ForgotPassword from "./Login/ForgotPassword";
 import ResetPassword from "./Login/ResetPassword";
 import ProtectedRoute from "./Login/ProtectedRoute";
+
 function App() {
   return (
     <Router>
@@ -128,6 +130,7 @@ function App() {
           <Route path="my-classes" element={<MyClasses />} />
           <Route path="register-class" element={<RegisterClass />} />
           <Route path="my-classes/:classId" element={<ClassDetails />} />
+          <Route path="my-classes/:classId/documents" element={<ClassDocuments />} />
 
           <Route path="grade" element={<StudentGrades />} />
           <Route path="grade/:classId" element={<GradeDetails />} />
