@@ -1,6 +1,8 @@
 const userAccount = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 const Role = require("../models/Role");
 
 exports.register = async (req, res, next) => {
@@ -187,5 +189,110 @@ exports.GetUserByRoleId = async (req, res) => {
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ message: "Server error", error });
+  }
+};
+
+// ── Forgot Password ──────────────────────────────────────────────────────────
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await userAccount.findOne({ email });
+    if (!user) {
+      // Trả thông báo chung để tránh lộ email có tồn tại không
+      return res.status(200).json({
+        message: "If that email is registered, a reset link has been sent.",
+      });
+    }
+
+    // Tạo raw token ngẫu nhiên (32 bytes)
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    // Hash token trước khi lưu DB
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
+
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = Date.now() + 60 * 60 * 1000; // 1 giờ
+    await user.save();
+
+    // Link gửi về FE (raw token, FE sẽ gửi lên BE để so sánh)
+    const resetUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/reset-password/${rawToken}`;
+
+    // Cấu hình transporter (dùng Gmail App Password hoặc Ethereal cho dev)
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"English Center" <${process.env.MAIL_USER}>`,
+      to: user.email,
+      subject: "Reset your password – English Center",
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:24px;border:1px solid #e5e7eb;border-radius:12px">
+          <h2 style="color:#0369a1">Reset Password</h2>
+          <p>Xin chào <strong>${user.fullName}</strong>,</p>
+          <p>Bạn đã yêu cầu đặt lại mật khẩu. Nhấn nút bên dưới để tiếp tục:</p>
+          <a href="${resetUrl}" style="display:inline-block;margin:16px 0;padding:12px 24px;background:#0ea5e9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold">Reset Password</a>
+          <p style="color:#6b7280;font-size:13px">Link có hiệu lực trong <strong>1 giờ</strong>. Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>
+        </div>
+      `,
+    });
+
+    res.status(200).json({
+      message: "If that email is registered, a reset link has been sent.",
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// ── Reset Password ───────────────────────────────────────────────────────────
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
+    }
+
+    // Hash raw token nhận từ FE để so sánh với DB
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    const user = await userAccount.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "Token is invalid or has expired" });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
