@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Users, BookOpen, GraduationCap, LayoutDashboard, Building } from "lucide-react";
+import { Users, BookOpen, GraduationCap, LayoutDashboard, Building, Trophy } from "lucide-react";
 
 export default function AdminSidebar() {
   const navigate = useNavigate();
@@ -24,6 +24,11 @@ export default function AdminSidebar() {
       icon: <Building size={20} />,
       text: "Manage Rooms",
       link: "/admin/rooms",
+    },
+    {
+      icon: <Trophy size={20} />,
+      text: "Grades Overview",
+      link: "/admin/grades",
     },
   ];
 

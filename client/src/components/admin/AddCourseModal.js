@@ -1,5 +1,4 @@
 import { useState } from "react";
-import axios from "axios";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,7 +23,7 @@ export default function AddCourseModal({ onClose, onCreate }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!validate()) return;
     const courseData = {
       name,
@@ -34,20 +33,7 @@ export default function AddCourseModal({ onClose, onCreate }) {
       status,
       level,
     };
-    try {
-      const token = localStorage.getItem("token");
-      const { data } = await axios.post(
-        "http://localhost:9999/api/courses/add",
-        courseData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (data.success) {
-        onCreate(data.data);
-        onClose();
-      }
-    } catch (err) {
-      console.error("Failed to create course", err);
-    }
+    onCreate(courseData);
   };
 
   return (

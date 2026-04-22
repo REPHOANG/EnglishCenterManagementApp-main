@@ -4,7 +4,12 @@ import { X } from "lucide-react";
 
 export default function ShowCourseDetailModal({ course, onClose }) {
   const [courseData, setCourseData] = useState(null);
-
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat("vi-VN", {
+      // style: "currency",
+      currency: "VND",
+    }).format(price);
+  };
   useEffect(() => {
     if (course) {
       setCourseData(course);
@@ -49,7 +54,7 @@ export default function ShowCourseDetailModal({ course, onClose }) {
                   <img src={courseData.image} alt="" className="max-h-32" />
                 ),
               },
-              { label: "Price", value: `$${courseData.price.toFixed(2)}` },
+              { label: "Price", value: `${formatPrice(courseData.price)} VNĐ` },
               { label: "Level", value: courseData.level },
               { label: "Status", value: courseData.status },
               {

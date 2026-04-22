@@ -27,6 +27,7 @@ import CourseManagement from "./pages/admin/CourseManagement";
 import ClassesManagement from "./pages/admin/ClassesManagement";
 import ClassForm from "./pages/admin/ClassForm";
 import RoomManagement from "./pages/admin/RoomManagement";
+import GradesOverview from "./pages/admin/GradesOverview";
 import UserManagement from "./pages/admin/UserManagement";
 import LoginPage from "./Login/Login";
 import ForgotPassword from "./Login/ForgotPassword";
@@ -100,6 +101,14 @@ function App() {
           element={
             <ProtectedRoute>
               <RoomManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/grades"
+          element={
+            <ProtectedRoute>
+              <GradesOverview />
             </ProtectedRoute>
           }
         />
