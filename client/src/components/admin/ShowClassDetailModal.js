@@ -1,89 +1,24 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Calendar, Users, Info, Plus, Trash2 } from "lucide-react";
+import { X, Calendar, Users, Info, Plus, Trash2, Edit } from "lucide-react";
+import { useClassDetail } from "../../hooks/admin/useClassDetail";
 
 export default function ShowClassDetailModal({ classData, onClose }) {
-  const [activeTab, setActiveTab] = useState("overview");
-
-  // Schedule Management State
-  const [schedules, setSchedules] = useState([]);
-  const [slots, setSlots] = useState([]);
-  const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const [newSchedule, setNewSchedule] = useState({
-    slotId: "",
-    roomId: "",
-    date: "",
-  });
-
-  useEffect(() => {
-    if (classData && activeTab === "schedule") {
-      fetchScheduleData();
-    }
-  }, [classData, activeTab]);
-
-  const fetchScheduleData = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const token = localStorage.getItem("token");
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      
-      const [schedRes, slotRes, roomRes] = await Promise.all([
-        axios.get(`http://localhost:9999/api/schedule/class/${classData._id}`, config),
-        axios.get(`http://localhost:9999/api/slots`, config),
-        axios.get(`http://localhost:9999/api/rooms`, config),
-      ]);
-
-      setSchedules(schedRes.data?.data || []);
-      setSlots(slotRes.data?.data || []);
-      setRooms(roomRes.data?.data || []);
-    } catch (e) {
-      console.error(e);
-      setError("Failed to load schedule data.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddSchedule = async () => {
-    try {
-      setError("");
-      if (!newSchedule.slotId || !newSchedule.roomId || !newSchedule.date) {
-        setError("Please fill all required fields for the schedule.");
-        return;
-      }
-      const token = localStorage.getItem("token");
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const payload = { ...newSchedule, classId: classData._id };
-
-      const res = await axios.post("http://localhost:9999/api/schedule/add", payload, config);
-      if (res.data.success) {
-        // refresh schedules
-        fetchScheduleData();
-        setNewSchedule({ slotId: "", roomId: "", date: "" });
-      }
-    } catch (e) {
-      console.error(e);
-      setError(e.response?.data?.message || "Failed to add schedule.");
-    }
-  };
-
-  const handleDeleteSchedule = async (id) => {
-    if (!window.confirm("Delete this schedule slot?")) return;
-    try {
-      const token = localStorage.getItem("token");
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      await axios.delete(`http://localhost:9999/api/schedule/delete/${id}`, config);
-      setSchedules(prev => prev.filter(s => s._id !== id));
-    } catch (e) {
-      console.error(e);
-      setError("Failed to delete schedule.");
-    }
-  };
+  const {
+    activeTab,
+    setActiveTab,
+    schedules,
+    slots,
+    rooms,
+    loading,
+    error,
+    newSchedule,
+    setNewSchedule,
+    editingScheduleId,
+    handleSaveSchedule,
+    handleDeleteSchedule,
+    startEditSchedule,
+    cancelEdit,
+  } = useClassDetail(classData);
 
   if (!classData) return null;
 
@@ -211,11 +146,14 @@ export default function ShowClassDetailModal({ classData, onClose }) {
                   </div>
                 )}
                 
-                {/* Add Schedule Form */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                {/* Add/Edit Schedule Form */}
+                <div className={`bg-white rounded-xl shadow-sm border p-5 transition-colors ${editingScheduleId ? 'border-orange-300 bg-orange-50/30' : 'border-gray-100'}`}>
                   <h3 className="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <Plus className="w-4 h-4 text-blue-600" />
-                    Add Schedule Slot
+                    {editingScheduleId ? (
+                      <><Edit className="w-4 h-4 text-orange-600" /> Edit Schedule Slot</>
+                    ) : (
+                      <><Plus className="w-4 h-4 text-blue-600" /> Add Schedule Slot</>
+                    )}
                   </h3>
                   <div className="flex flex-wrap items-end gap-4">
                     <div className="flex-1 min-w-[150px]">
@@ -259,13 +197,23 @@ export default function ShowClassDetailModal({ classData, onClose }) {
                         onChange={(e) => setNewSchedule({...newSchedule, meeting: e.target.value})}
                       />
                     </div> */}
-                    <button
-                      onClick={handleAddSchedule}
-                      disabled={loading}
-                      className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors text-sm disabled:opacity-50"
-                    >
-                      Add Slot
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSaveSchedule}
+                        disabled={loading}
+                        className={`px-5 py-2 text-white font-medium rounded-lg shadow-sm transition-colors text-sm disabled:opacity-50 ${editingScheduleId ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                      >
+                        {editingScheduleId ? "Update" : "Add Slot"}
+                      </button>
+                      {editingScheduleId && (
+                        <button
+                          onClick={cancelEdit}
+                          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors text-sm"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -313,6 +261,13 @@ export default function ShowClassDetailModal({ classData, onClose }) {
                               ) : "-"}
                             </td> */}
                             <td className="px-4 py-3 text-right">
+                              <button
+                                onClick={() => startEditSchedule(sched)}
+                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors mr-1"
+                                title="Edit Slot"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
                               <button
                                 onClick={() => handleDeleteSchedule(sched._id)}
                                 className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
