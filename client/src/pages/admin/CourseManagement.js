@@ -75,6 +75,13 @@ export default function Courses() {
     }
   };
 
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat("vi-VN", {
+      // style: "currency",
+      currency: "VND",
+    }).format(price);
+  };
+
   const filtered = courses.filter((c) => {
     const s = search.toLowerCase();
     return (
@@ -184,7 +191,7 @@ export default function Courses() {
                     {c.level}
                   </span>
                 </td>
-                <td className="py-4 px-4">${c.price.toFixed(2)}</td>
+                <td className="py-4 px-4">{formatPrice(c.price.toFixed(0))} VND</td>
                 <td className="py-4 px-4">
                   <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs">
                     {c.status}

@@ -25,6 +25,8 @@ import StudentDashboard from "./pages/student/StudentDashboard";
 import Dashboard from "./pages/admin/DashBoard";
 import CourseManagement from "./pages/admin/CourseManagement";
 import ClassesManagement from "./pages/admin/ClassesManagement";
+import ClassForm from "./pages/admin/ClassForm";
+import RoomManagement from "./pages/admin/RoomManagement";
 import UserManagement from "./pages/admin/UserManagement";
 import LoginPage from "./Login/Login";
 import ForgotPassword from "./Login/ForgotPassword";
@@ -74,6 +76,30 @@ function App() {
           element={
             <ProtectedRoute>
               <ClassesManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/classes/add"
+          element={
+            <ProtectedRoute>
+              <ClassForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/classes/edit/:id"
+          element={
+            <ProtectedRoute>
+              <ClassForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/rooms"
+          element={
+            <ProtectedRoute>
+              <RoomManagement />
             </ProtectedRoute>
           }
         />
