@@ -120,7 +120,7 @@ const getStudentSchedule = async (req, res) => {
       .populate('roomId', 'name location')
       .populate({
         path: 'classId',
-        select: 'name',
+          select: 'name courseId teachers students',
         populate: [
           {
             path: 'courseId',
@@ -145,7 +145,14 @@ const getStudentSchedule = async (req, res) => {
     }
 
     const filteredSchedules = schedules.filter(item =>
+      // Must belong to this student
       item.classId?.students?.some(t => t._id.toString() === studentId)
+    ).filter(item =>
+      // Skip schedules with any dangling (null) populated reference
+      item.slotId != null &&
+      item.roomId != null &&
+      item.classId != null &&
+      item.classId.courseId != null
     ).map(item => ({
       id: item._id,
       slot: {

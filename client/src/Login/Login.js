@@ -4,7 +4,7 @@ import {jwtDecode} from 'jwt-decode';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
-    username: '',
+    userName: '',
     password: '',
   });
   const [error, setError] = useState('');
