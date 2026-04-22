@@ -1,0 +1,68 @@
+[
+  {
+    "_id": {
+      "$oid": "69dcfeec5bf89803b3cc4945"
+    },
+    "fullName": "Nguyen Van Admin New",
+    "userName": "admin_new_01",
+    "password": "$2b$10$G5EpgZc4TKV89SzgmtJ8.uJJQzBfwPf054FQfKPzh8hjS1X4RhmIO", 
+    "email": "admin_new_01@gmail.com",
+    "number": "0901000101",
+    "birthday": {
+      "$date": "1988-01-01T00:00:00.000Z"
+    },
+    "address": "Ha Noi",
+    "roleId": "r1",
+    "createdAt": {
+      "$date": "2026-04-13T14:34:20.552Z"
+    },
+    "updatedAt": {
+      "$date": "2026-04-13T14:34:20.552Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "69dcff2e5bf89803b3cc4948"
+    },
+    "fullName": "Tran Thi Teacher New",
+    "userName": "teacher_new_01",
+    "password": "$2b$10$852ByeNnLvZHskk6AripV.n21uHSJCtnFrkG8DXIngtph2n4VEe3y",
+    "email": "teacher_new_01@gmail.com",
+    "number": "0901000102",
+    "birthday": {
+      "$date": "1992-05-12T00:00:00.000Z"
+    },
+    "address": "Da Nang",
+    "roleId": "r2",
+    "createdAt": {
+      "$date": "2026-04-13T14:35:26.754Z"
+    },
+    "updatedAt": {
+      "$date": "2026-04-13T14:35:26.754Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "69dcff455bf89803b3cc494b"
+    },
+    "fullName": "Le Van Student New",
+    "userName": "student_new_01",
+    "password": "$2b$10$9glVcWUcfiUT3giB69AiPe8qtHMhNk4JEW7UOg/vRltU0VypMbCgG",
+    "email": "student_new_01@gmail.com",
+    "number": "0901000103",
+    "birthday": {
+      "$date": "2005-08-20T00:00:00.000Z"
+    },
+    "address": "Ho Chi Minh City",
+    "roleId": "r3",
+    "createdAt": {
+      "$date": "2026-04-13T14:35:49.052Z"
+    },
+    "updatedAt": {
+      "$date": "2026-04-13T14:35:49.052Z"
+    },
+    "__v": 0
+  }
+]

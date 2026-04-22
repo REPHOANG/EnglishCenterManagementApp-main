@@ -1,0 +1,53 @@
+[
+  {
+    "_id": {
+      "$oid": "69dd10015bf89803b3cc5001"
+    },
+    "name": "English For Beginners",
+    "description": "Basic English course for new learners.",
+    "image": "https://example.com/images/course-beginner.jpg",
+    "price": 1500000,
+    "status": "active",
+    "level": "beginner",
+    "createdAt": {
+      "$date": "2026-01-10T08:15:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2026-01-10T08:15:00.000Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69dd10025bf89803b3cc5002"
+    },
+    "name": "IELTS Preparation",
+    "description": "Focused IELTS skills training for intermediate learners.",
+    "image": "https://example.com/images/course-ielts.jpg",
+    "price": 3200000,
+    "status": "active",
+    "level": "intermediate",
+    "createdAt": {
+      "$date": "2026-01-10T08:15:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2026-01-10T08:15:00.000Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69dd10035bf89803b3cc5003"
+    },
+    "name": "Business English",
+    "description": "Advanced communication for workplace contexts.",
+    "image": "https://example.com/images/course-business.jpg",
+    "price": 3500000,
+    "status": "inactive",
+    "level": "advanced",
+    "createdAt": {
+      "$date": "2026-01-10T08:15:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2026-01-10T08:15:00.000Z"
+    }
+  }
+]

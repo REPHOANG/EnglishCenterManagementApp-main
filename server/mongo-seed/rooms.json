@@ -1,0 +1,50 @@
+[
+  {
+    "_id": {
+      "$oid": "69dd20015bf89803b3cc6001"
+    },
+    "name": "R101",
+    "capacity": 30,
+    "available": true,
+    "type": "classroom",
+    "location": "Building A, Floor 1",
+    "createdAt": {
+      "$date": "2026-01-10T08:10:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2026-01-10T08:10:00.000Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69dd20025bf89803b3cc6002"
+    },
+    "name": "R102",
+    "capacity": 25,
+    "available": true,
+    "type": "classroom",
+    "location": "Building A, Floor 1",
+    "createdAt": {
+      "$date": "2026-01-10T08:10:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2026-01-10T08:10:00.000Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69dd20035bf89803b3cc6003"
+    },
+    "name": "R201",
+    "capacity": 40,
+    "available": false,
+    "type": "auditorium",
+    "location": "Building B, Floor 2",
+    "createdAt": {
+      "$date": "2026-01-10T08:10:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2026-01-10T08:10:00.000Z"
+    }
+  }
+]

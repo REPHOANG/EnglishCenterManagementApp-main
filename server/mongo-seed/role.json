@@ -1,0 +1,21 @@
+[{
+  "_id": {
+    "$oid": "686df19c514c2bff4b63502c"
+  },
+  "name": "Admin",
+  "id": "r1"
+},
+{
+  "_id": {
+    "$oid": "686df1c3514c2bff4b635030"
+  },
+  "name": "Teacher",
+  "id": "r2"
+},
+{
+  "_id": {
+    "$oid": "686df1b2514c2bff4b63502e"
+  },
+  "name": "Student",
+  "id": "r3"
+}]

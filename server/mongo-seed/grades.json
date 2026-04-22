@@ -1,0 +1,74 @@
+[
+  {
+    "_id": {
+      "$oid": "69dd40015bf89803b3cc8001"
+    },
+    "studentId": {
+      "$oid": "69dcff455bf89803b3cc494b"
+    },
+    "classId": {
+      "$oid": "69dd30015bf89803b3cc7001"
+    },
+    "score": {
+      "listening": 8.5,
+      "reading": 7.8,
+      "writing": 7.2,
+      "speaking": 8.0
+    },
+    "comment": "Good progress, improve writing cohesion.",
+    "createdAt": {
+      "$date": "2026-03-01T10:00:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2026-03-01T10:00:00.000Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69dd40025bf89803b3cc8002"
+    },
+    "studentId": {
+      "$oid": "69dcff455bf89803b3cc494b"
+    },
+    "classId": {
+      "$oid": "69dd30015bf89803b3cc7001"
+    },
+    "score": {
+      "listening": 7.4,
+      "reading": 7.0,
+      "writing": 6.8,
+      "speaking": 7.1
+    },
+    "comment": "Need more speaking confidence.",
+    "createdAt": {
+      "$date": "2026-03-01T10:00:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2026-03-01T10:00:00.000Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69dd40035bf89803b3cc8003"
+    },
+    "studentId": {
+      "$oid": "69dcff455bf89803b3cc494b"
+    },
+    "classId": {
+      "$oid": "69dd30025bf89803b3cc7002"
+    },
+    "score": {
+      "listening": 8.9,
+      "reading": 8.4,
+      "writing": 8.0,
+      "speaking": 8.7
+    },
+    "comment": "Excellent consistency across all skills.",
+    "createdAt": {
+      "$date": "2026-03-01T10:00:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2026-03-01T10:00:00.000Z"
+    }
+  }
+]

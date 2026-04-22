@@ -1,0 +1,108 @@
+[
+  {
+    "_id": {
+      "$oid": "69dd30015bf89803b3cc7001"
+    },
+    "name": "CLS-BEG-01",
+    "courseId": {
+      "$oid": "69dd10015bf89803b3cc5001"
+    },
+    "startDate": {
+      "$date": "2026-02-01T00:00:00.000Z"
+    },
+    "endDate": {
+      "$date": "2026-04-30T00:00:00.000Z"
+    },
+    "capacity": 30,
+    "schedule": [
+      {
+        "weekday": "Mon",
+        "slot": {
+          "$oid": "69dd60015bf89803b3cca001"
+        },
+        "room": {
+          "$oid": "69dd20015bf89803b3cc6001"
+        }
+      },
+      {
+        "weekday": "Wed",
+        "slot": {
+          "$oid": "69dd60025bf89803b3cca002"
+        },
+        "room": {
+          "$oid": "69dd20025bf89803b3cc6002"
+        }
+      }
+    ],
+    "status": "ongoing",
+    "teachers": [
+      {
+        "$oid": "69dcff2e5bf89803b3cc4948"
+      }
+    ],
+    "students": [
+      {
+        "$oid": "69dcff455bf89803b3cc494b"
+      }
+    ],
+    "createdAt": {
+      "$date": "2026-01-10T08:20:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2026-01-10T08:20:00.000Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69dd30025bf89803b3cc7002"
+    },
+    "name": "CLS-IELTS-01",
+    "courseId": {
+      "$oid": "69dd10025bf89803b3cc5002"
+    },
+    "startDate": {
+      "$date": "2026-02-15T00:00:00.000Z"
+    },
+    "endDate": {
+      "$date": "2026-05-31T00:00:00.000Z"
+    },
+    "capacity": 25,
+    "schedule": [
+      {
+        "weekday": "Tue",
+        "slot": {
+          "$oid": "69dd60035bf89803b3cca003"
+        },
+        "room": {
+          "$oid": "69dd20025bf89803b3cc6002"
+        }
+      },
+      {
+        "weekday": "Thu",
+        "slot": {
+          "$oid": "69dd60045bf89803b3cca004"
+        },
+        "room": {
+          "$oid": "69dd20015bf89803b3cc6001"
+        }
+      }
+    ],
+    "status": "ongoing",
+    "teachers": [
+      {
+        "$oid": "69dcff2e5bf89803b3cc4948"
+      }
+    ],
+    "students": [
+      {
+        "$oid": "69dcff455bf89803b3cc494b"
+      }
+    ],
+    "createdAt": {
+      "$date": "2026-01-10T08:20:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2026-01-10T08:20:00.000Z"
+    }
+  }
+]
