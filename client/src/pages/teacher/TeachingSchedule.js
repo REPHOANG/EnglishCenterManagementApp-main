@@ -1,365 +1,301 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { RefreshCw, Calendar, Clock, MapPin, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+
+/* ─── Shared style tokens ─────────────────────────────── */
+const card = {
+  background: "#fff",
+  borderRadius: "16px",
+  boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06)",
+  border: "1px solid rgba(0,0,0,0.05)",
+};
+
+const badge = (color) => ({
+  display: "inline-flex", alignItems: "center", gap: "4px",
+  padding: "3px 10px", borderRadius: "20px",
+  fontSize: "11px", fontWeight: 600,
+  ...color,
+});
+
+const DAY_COLORS = ["#e0e7ff", "#fce7f3", "#d1fae5", "#fef3c7", "#dbeafe", "#ede9fe", "#ffedd5"];
+const DAY_TEXT =  ["#4338ca", "#be185d", "#065f46", "#92400e", "#1d4ed8", "#6d28d9", "#c2410c"];
 
 export default function TeachingSchedule() {
-    const [year, setYear] = useState(new Date().getFullYear());
-    const [weeks, setWeeks] = useState([]);
-    const [selectedWeek, setSelectedWeek] = useState(null);
-    const [schedule, setSchedule] = useState([]);
-    const [slots, setSlots] = useState([]);
-    const [weekdays, setWeekdays] = useState([]);
-    const [loading, setLoading] = useState(false);
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [weeks, setWeeks] = useState([]);
+  const [selectedWeek, setSelectedWeek] = useState(null);
+  const [schedule, setSchedule] = useState([]);
+  const [slots, setSlots] = useState([]);
+  const [weekdays, setWeekdays] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-    // Generate all weeks for a given year
-    const generateWeeksOfYear = (targetYear) => {
-        const startDate = new Date(`${targetYear}-01-01`);
-        // Adjust to get the first Monday of the year
-        while (startDate.getDay() !== 1) {
-            startDate.setDate(startDate.getDate() + 1);
-        }
-
-        const weeks = [];
-        for (let i = 0; i < 53; i++) {
-            const weekStart = new Date(startDate);
-            weekStart.setDate(startDate.getDate() + i * 7);
-
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekStart.getDate() + 6);
-
-            // Stop if week starts in next year and it's not the first week of that year
-            if (weekStart.getFullYear() > targetYear && i > 0) break;
-
-            const label = `${weekStart.toLocaleDateString('en-GB')} To ${weekEnd.toLocaleDateString('en-GB')}`;
-            weeks.push({
-                label,
-                start: new Date(weekStart),
-                end: new Date(weekEnd),
-            });
-        }
-        return weeks;
-    };
-
-    // Function to get week dates from selected week
-    const getWeekDatesFromSelectedWeek = (selectedWeek) => {
-        if (!selectedWeek) return [];
-
-        const weekDates = [];
-        const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-        const targetDays = [1, 2, 3, 4, 5, 6, 0]; // Monday=1, Tuesday=2, ..., Sunday=0
-
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(selectedWeek.start);
-            date.setDate(selectedWeek.start.getDate() + i);
-
-            weekDates.push({
-                label: dayNames[i],
-                targetDay: targetDays[i],
-                date: date.toISOString().split('T')[0] // Format as YYYY-MM-DD
-            });
-        }
-
-        return weekDates;
-    };
-
-    // Function to format week range for display
-    const getWeekRange = (weekDates) => {
-        if (weekDates.length === 0) return "";
-
-        const firstDate = new Date(weekDates[0].date);
-        const lastDate = new Date(weekDates[6].date);
-
-        const formatDate = (date) => {
-            return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-        };
-
-        return `Week of ${formatDate(firstDate)} - ${formatDate(lastDate)}`;
-    };
-
-    // Fetch schedule data
-    const fetchSchedule = async () => {
-        try {
-            setLoading(true);
-            const token = localStorage.getItem("token");
-            if (!token) {
-                console.error("No token found in localStorage");
-                return;
-            }
-            const teacherId = jwtDecode(token).id;
-            console.log("Fetching schedule for teacher ID:", teacherId);
-            const response = await axios.get(`http://localhost:9999/api/teacher/${teacherId}/schedules`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-
-            if (response.data && response.data.success && Array.isArray(response.data.data)) {
-                setSchedule(response.data.data);
-            } else {
-                console.error("Unexpected schedule response structure:", response.data);
-                setSchedule([]);
-            }
-        } catch (error) {
-            console.error("Error fetching schedule:", error);
-            setSchedule([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Fetch slots data
-    const fetchSlots = async () => {
-        try {
-            const token = localStorage.getItem("token");
-            const response = await axios.get('http://localhost:9999/api/teacher/slots', {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-
-            if (response.data && response.data.success && Array.isArray(response.data.data)) {
-                setSlots(response.data.data);
-            } else {
-                console.error("Unexpected slots response structure:", response.data);
-                setSlots([]);
-            }
-        } catch (error) {
-            console.error("Error fetching slots:", error);
-            setSlots([]);
-        }
-    };
-
-    // Effect to generate weeks when year changes
-    useEffect(() => {
-        const newWeeks = generateWeeksOfYear(year);
-        setWeeks(newWeeks);
-
-        // Find current week instead of selecting first week
-        const currentDate = new Date();
-        const currentWeek = newWeeks.find(week => {
-            // Reset time to midnight for accurate date comparison
-            const currentDateOnly = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
-            const weekStart = new Date(week.start.getFullYear(), week.start.getMonth(), week.start.getDate());
-            const weekEnd = new Date(week.end.getFullYear(), week.end.getMonth(), week.end.getDate());
-
-            return currentDateOnly >= weekStart && currentDateOnly <= weekEnd;
-        });
-
-        setSelectedWeek(currentWeek || (newWeeks.length > 0 ? newWeeks[0] : null));
-
-        console.log("Generated weeks:", newWeeks);
-        console.log("Current date:", currentDate);
-        console.log("Selected current week:", currentWeek || newWeeks[0]);
-    }, [year]);
-
-    // Effect to update weekdays when selected week changes
-    useEffect(() => {
-        if (selectedWeek) {
-            const weekDates = getWeekDatesFromSelectedWeek(selectedWeek);
-            setWeekdays(weekDates);
-        }
-    }, [selectedWeek]);
-
-    // Effect to fetch initial data
-    useEffect(() => {
-        fetchSlots();
-        fetchSchedule();
-    }, []);
-
-    // Effect to refresh schedule when selectedWeek changes (optional - for real-time updates)
-    useEffect(() => {
-        if (selectedWeek) {
-            fetchSchedule();
-        }
-    }, [selectedWeek]);
-
-    // Set up auto-refresh every 30 seconds for real-time updates
-    useEffect(() => {
-        const interval = setInterval(() => {
-            console.log("Auto-refreshing schedule data...");
-            fetchSchedule();
-        }, 30000); // Refresh every 30 seconds
-
-        return () => clearInterval(interval); // Cleanup on unmount
-    }, []);
-
-    // Add manual refresh button functionality
-    const handleRefresh = () => {
-        fetchSchedule();
-    };
-
-    // Group schedule items by slot ID and filter by selected week
-    const groupedSchedule = {};
-    if (Array.isArray(schedule) && selectedWeek) {
-        console.log("Selected week:", selectedWeek);
-        console.log("All schedule items:", schedule);
-
-        // Filter schedule items to only include those in the selected week
-        const filteredSchedule = schedule.filter(item => {
-            const itemDate = new Date(item.date);
-            const isInWeek = itemDate >= selectedWeek.start && itemDate <= selectedWeek.end;
-            console.log(`Item date: ${item.date}, In selected week: ${isInWeek}`);
-            return isInWeek;
-        });
-
-        console.log("Filtered schedule for selected week:", filteredSchedule);
-
-        // Group the filtered schedule by slot ID
-        filteredSchedule.forEach(item => {
-            const slotId = item.slot.id;
-            if (!groupedSchedule[slotId]) {
-                groupedSchedule[slotId] = [];
-            }
-            groupedSchedule[slotId].push(item);
-        });
+  const generateWeeksOfYear = (targetYear) => {
+    const startDate = new Date(`${targetYear}-01-01`);
+    while (startDate.getDay() !== 1) startDate.setDate(startDate.getDate() + 1);
+    const weeks = [];
+    for (let i = 0; i < 53; i++) {
+      const weekStart = new Date(startDate);
+      weekStart.setDate(startDate.getDate() + i * 7);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      if (weekStart.getFullYear() > targetYear && i > 0) break;
+      const label = `${weekStart.toLocaleDateString('en-GB')} To ${weekEnd.toLocaleDateString('en-GB')}`;
+      weeks.push({ label, start: new Date(weekStart), end: new Date(weekEnd) });
     }
+    return weeks;
+  };
 
-    return (
+  const getWeekDates = (selectedWeek) => {
+    if (!selectedWeek) return [];
+    const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    return dayNames.map((label, i) => {
+      const date = new Date(selectedWeek.start);
+      date.setDate(selectedWeek.start.getDate() + i);
+      return { label, date: date.toISOString().split('T')[0] };
+    });
+  };
+
+  const fetchSchedule = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      const teacherId = jwtDecode(token).id;
+      const response = await axios.get(`http://localhost:9999/api/teacher/${teacherId}/schedules`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data?.success && Array.isArray(response.data.data)) {
+        setSchedule(response.data.data);
+      } else { setSchedule([]); }
+    } catch { setSchedule([]); }
+    finally { setLoading(false); }
+  };
+
+  const fetchSlots = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get('http://localhost:9999/api/teacher/slots', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data?.success && Array.isArray(response.data.data)) {
+        setSlots(response.data.data);
+      }
+    } catch { setSlots([]); }
+  };
+
+  useEffect(() => {
+    const newWeeks = generateWeeksOfYear(year);
+    setWeeks(newWeeks);
+    const today = new Date();
+    const current = newWeeks.find(w => {
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const s = new Date(w.start.getFullYear(), w.start.getMonth(), w.start.getDate());
+      const e = new Date(w.end.getFullYear(), w.end.getMonth(), w.end.getDate());
+      return d >= s && d <= e;
+    });
+    setSelectedWeek(current || newWeeks[0] || null);
+  }, [year]);
+
+  useEffect(() => { if (selectedWeek) setWeekdays(getWeekDates(selectedWeek)); }, [selectedWeek]);
+  useEffect(() => { fetchSlots(); fetchSchedule(); }, []);
+  useEffect(() => { if (selectedWeek) fetchSchedule(); }, [selectedWeek]);
+
+  const currentWeekIdx = weeks.findIndex(w => w.label === selectedWeek?.label);
+  const goPrev = () => { if (currentWeekIdx > 0) setSelectedWeek(weeks[currentWeekIdx - 1]); };
+  const goNext = () => { if (currentWeekIdx < weeks.length - 1) setSelectedWeek(weeks[currentWeekIdx + 1]); };
+
+  // Build grouped schedule
+  const groupedSchedule = {};
+  if (Array.isArray(schedule) && selectedWeek) {
+    schedule.filter(item => {
+      const d = new Date(item.date);
+      return d >= selectedWeek.start && d <= selectedWeek.end;
+    }).forEach(item => {
+      const sid = item.slot.id;
+      if (!groupedSchedule[sid]) groupedSchedule[sid] = [];
+      groupedSchedule[sid].push(item);
+    });
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "24px" }}>
         <div>
-            <div className="w-full p-8 bg-gray-50 min-h-screen">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Teaching Schedule</h2>
-                        <p className="text-gray-500">{getWeekRange(weekdays)}</p>
-                    </div>
-                    {/* Add refresh button */}
-                    <button
-                        onClick={handleRefresh}
-                        disabled={loading}
-                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-                    >
-                        {loading ? 'Refreshing...' : 'Refresh'}
-                    </button>
-                </div>
-
-                {/* Week Selection Controls */}
-                <div className="flex items-center gap-4 mb-6 bg-white p-4 rounded-lg shadow">
-                    <label className="text-sm font-semibold text-gray-700">YEAR:</label>
-                    <select
-                        value={year}
-                        onChange={(e) => setYear(+e.target.value)}
-                        className="border border-gray-300 px-3 py-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                        {[2023, 2024, 2025, 2026, 2027].map(yearOption => (
-                            <option key={yearOption} value={yearOption}>{yearOption}</option>
-                        ))}
-                    </select>
-
-                    <label className="text-sm font-semibold text-gray-700">WEEK:</label>
-                    <select
-                        value={selectedWeek?.label || ""}
-                        onChange={(e) => {
-                            const week = weeks.find((w) => w.label === e.target.value);
-                            setSelectedWeek(week);
-                        }}
-                        className="border border-gray-300 px-3 py-2 rounded text-sm max-w-[300px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                        {weeks.map((week) => (
-                            <option key={week.label} value={week.label}>
-                                {week.label}
-                            </option>
-                        ))}
-                    </select>
-
-                    {selectedWeek && (
-                        <span className="text-sm text-blue-600 font-medium">
-                            ({selectedWeek.start.toDateString()} - {selectedWeek.end.toDateString()})
-                        </span>
-                    )}
-                </div>
-
-                <div className="rounded-lg shadow-lg">
-                    <table className="max-w-full min-w-[600px] bg-white shadow-md border border-gray-200">
-                        <thead>
-                            <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
-                                <th rowSpan={2} className="py-3 px-4 text-center border border-gray-200">Time</th>
-                                {weekdays.map(day => (
-                                    <th
-                                        key={day.label}
-                                        className="py-3 px-4 text-center border border-gray-200 w-[150px]"
-                                    >
-                                        {day.label}
-                                    </th>
-                                ))}
-                            </tr>
-                            <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
-                                {weekdays.map(day => (
-                                    <th
-                                        key={day.label}
-                                        className="py-3 px-4 text-center border border-gray-200 w-[150px]"
-                                    >
-                                        {new Date(day.date).getDate()}/{new Date(day.date).getMonth() + 1}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="text-gray-700 text-sm">
-                            {loading && (
-                                <tr>
-                                    <td colSpan={8} className="text-center py-4">
-                                        Loading schedule...
-                                    </td>
-                                </tr>
-                            )}
-                            {!loading && slots.map((slot, index) => {
-                                const slotId = slot._id;
-                                const itemsForSlot = groupedSchedule[slotId] || [];
-                                return (
-                                    <tr key={slotId} className="border-b last:border-none">
-                                        <td className="py-4 px-4 font-semibold text-gray-500 border border-gray-200">
-                                            <div className="text-lg text-gray-800 text-center">Slot {index + 1}</div>
-                                            <div className="text-center">{slot.from} - {slot.to}</div>
-                                        </td>
-                                        {weekdays.map(day => {
-                                            const scheduleForDay = itemsForSlot.find(item => {
-                                                const itemDate = new Date(item.date);
-                                                const dayDate = new Date(day.date);
-
-                                                // Compare dates directly instead of using day of week
-                                                return itemDate.toDateString() === dayDate.toDateString();
-                                            });
-                                            return (
-                                                <td
-                                                    key={day.label}
-                                                    className="py-2 px-2 border border-gray-200 w-[250px]"
-                                                >
-                                                    {scheduleForDay ? (
-                                                        <>
-                                                            <div>
-                                                                <span className="pr-2 font-semibold text-green-500">Class:</span>
-                                                                <span className="text-blue-800 cursor-pointer">
-                                                                    {scheduleForDay.class.name}
-                                                                </span>
-                                                            </div>
-                                                            <div>
-                                                                <span className="pr-2 font-semibold text-orange-500">Course:</span>
-                                                                <span className="text-blue-800 cursor-pointer">
-                                                                    {scheduleForDay.class.course}
-                                                                </span>
-                                                            </div>
-                                                            <div>
-                                                                <span className="pr-2 font-semibold text-blue-500">Room:</span>
-                                                                <span className="text-blue-800 cursor-pointer">
-                                                                    {scheduleForDay.room.name}
-                                                                </span>
-                                                            </div>
-                                                            <div>
-                                                                <span className="text-md text-gray-500 font-semibold">
-                                                                    {scheduleForDay.room.location}
-                                                                </span>
-                                                            </div>
-                                                        </>
-                                                    ) : null}
-                                                </td>
-                                            );
-                                        })}
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#0f172a", margin: 0 }}>Teaching Schedule</h1>
+          <p style={{ color: "#64748b", fontSize: "13px", marginTop: "4px" }}>
+            {selectedWeek ? `${selectedWeek.start.toLocaleDateString('en-GB')} — ${selectedWeek.end.toLocaleDateString('en-GB')}` : "Select a week"}
+          </p>
         </div>
-    );
+        <button
+          onClick={fetchSchedule}
+          disabled={loading}
+          style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            padding: "8px 16px", borderRadius: "10px",
+            background: loading ? "#e2e8f0" : "linear-gradient(135deg, #0ea5e9, #0284c7)",
+            color: loading ? "#94a3b8" : "#fff",
+            border: "none", cursor: loading ? "not-allowed" : "pointer",
+            fontSize: "13px", fontWeight: 600,
+            boxShadow: loading ? "none" : "0 4px 12px rgba(14,165,233,0.3)",
+            transition: "all 0.2s",
+          }}
+        >
+          <RefreshCw size={14} style={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
+          {loading ? "Refreshing..." : "Refresh"}
+        </button>
+      </div>
+
+      {/* Week Controls */}
+      <div style={{ ...card, padding: "16px 20px", marginBottom: "20px", display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Calendar size={16} style={{ color: "#6366f1" }} />
+          <span style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Year:</span>
+          <select
+            value={year}
+            onChange={e => setYear(+e.target.value)}
+            style={{
+              border: "1.5px solid #e2e8f0", borderRadius: "8px",
+              padding: "5px 10px", fontSize: "13px", color: "#1e293b",
+              background: "#f8fafc", cursor: "pointer", outline: "none",
+            }}
+          >
+            {[2023, 2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1 }}>
+          <button onClick={goPrev} disabled={currentWeekIdx <= 0} style={{
+            background: "#f1f5f9", border: "1.5px solid #e2e8f0", borderRadius: "8px",
+            padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center",
+            color: "#475569",
+          }}>
+            <ChevronLeft size={14} />
+          </button>
+          <select
+            value={selectedWeek?.label || ""}
+            onChange={e => setSelectedWeek(weeks.find(w => w.label === e.target.value))}
+            style={{
+              border: "1.5px solid #e2e8f0", borderRadius: "8px",
+              padding: "5px 12px", fontSize: "13px", color: "#1e293b",
+              background: "#f8fafc", flex: 1, maxWidth: "320px", outline: "none",
+            }}
+          >
+            {weeks.map(w => <option key={w.label} value={w.label}>{w.label}</option>)}
+          </select>
+          <button onClick={goNext} disabled={currentWeekIdx >= weeks.length - 1} style={{
+            background: "#f1f5f9", border: "1.5px solid #e2e8f0", borderRadius: "8px",
+            padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center",
+            color: "#475569",
+          }}>
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      </div>
+
+      {/* Timetable */}
+      <div style={{ ...card, overflow: "hidden" }}>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "700px" }}>
+            <thead>
+              <tr style={{ background: "linear-gradient(90deg, #0c1a2e, #0a2744)" }}>
+                <th style={{ padding: "14px 16px", color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 600, textAlign: "center", width: "120px", letterSpacing: "0.5px" }}>
+                  TIME SLOT
+                </th>
+                {weekdays.map((day, idx) => {
+                  const isToday = day.date === today;
+                  return (
+                    <th key={day.label} style={{ padding: "14px 8px", textAlign: "center", width: "13%" }}>
+                      <div style={{
+                        display: "inline-flex", flexDirection: "column", alignItems: "center",
+                        background: isToday ? "rgba(14,165,233,0.3)" : "transparent",
+                        borderRadius: "10px", padding: "4px 12px",
+                        border: isToday ? "1px solid rgba(14,165,233,0.5)" : "none",
+                      }}>
+                        <span style={{ color: isToday ? "#7dd3fc" : "rgba(255,255,255,0.5)", fontSize: "10px", fontWeight: 600, letterSpacing: "1px" }}>
+                          {day.label.toUpperCase()}
+                        </span>
+                        <span style={{ color: isToday ? "#fff" : "rgba(255,255,255,0.85)", fontSize: "15px", fontWeight: 700 }}>
+                          {new Date(day.date).getDate()}
+                        </span>
+                      </div>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={8} style={{ textAlign: "center", padding: "48px", color: "#94a3b8", fontSize: "14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                      <RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} />
+                      Loading schedule...
+                    </div>
+                  </td>
+                </tr>
+              ) : slots.map((slot, index) => {
+                const slotId = slot._id;
+                const itemsForSlot = groupedSchedule[slotId] || [];
+                const isEven = index % 2 === 0;
+                return (
+                  <tr key={slotId} style={{ background: isEven ? "#fff" : "#fafbff", borderBottom: "1px solid #f1f5f9" }}>
+                    <td style={{ padding: "12px 16px", textAlign: "center", borderRight: "1px solid #f1f5f9" }}>
+                      <div style={{ fontWeight: 700, fontSize: "13px", color: "#1e293b" }}>Slot {index + 1}</div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", color: "#64748b", fontSize: "11px", marginTop: "2px" }}>
+                        <Clock size={11} /> {slot.from} – {slot.to}
+                      </div>
+                    </td>
+                    {weekdays.map((day, dayIdx) => {
+                      const entry = itemsForSlot.find(item =>
+                        new Date(item.date).toDateString() === new Date(day.date).toDateString()
+                      );
+                      const isToday = day.date === today;
+                      return (
+                        <td key={day.label} style={{
+                          padding: "8px",
+                          borderRight: dayIdx < weekdays.length - 1 ? "1px solid #f1f5f9" : "none",
+                          background: isToday ? "rgba(219, 242, 255, 0.6)" : "transparent",
+                          verticalAlign: "top",
+                        }}>
+                          {entry ? (
+                            <div style={{
+                              background: `linear-gradient(135deg, ${DAY_COLORS[dayIdx % 7]}, ${DAY_COLORS[(dayIdx + 1) % 7]}44)`,
+                              border: `1.5px solid ${DAY_COLORS[dayIdx % 7]}`,
+                              borderRadius: "10px",
+                              padding: "8px 10px",
+                              fontSize: "12px",
+                            }}>
+                              <div style={{ fontWeight: 700, color: DAY_TEXT[dayIdx % 7], marginBottom: "4px", fontSize: "12px" }}>
+                                {entry.class.name}
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#475569", marginBottom: "2px" }}>
+                                <BookOpen size={10} />
+                                <span style={{ fontSize: "11px" }}>{entry.class.course}</span>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#475569" }}>
+                                <MapPin size={10} />
+                                <span style={{ fontSize: "11px" }}>{entry.room.name}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{ textAlign: "center", color: "#cbd5e1", fontSize: "18px", padding: "8px 0" }}>–</div>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 }
