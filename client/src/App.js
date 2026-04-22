@@ -1,5 +1,5 @@
 import "./App.css";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 // Teacher
 import TeacherLayout from "./layouts/TeacherLayout";
@@ -27,12 +27,16 @@ import CourseManagement from "./pages/admin/CourseManagement";
 import ClassesManagement from "./pages/admin/ClassesManagement";
 import UserManagement from "./pages/admin/UserManagement";
 import LoginPage from "./Login/Login";
+import ForgotPassword from "./Login/ForgotPassword";
+import ResetPassword from "./Login/ResetPassword";
 import ProtectedRoute from "./Login/ProtectedRoute";
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         {/* Teacher Layout */}
         <Route path="/teacher" element={<TeacherLayout />}>
           <Route path="courses" element={<Courses />} />
@@ -92,6 +96,8 @@ function App() {
           <Route path="grade" element={<StudentGrades />} />
           <Route path="grade/:classId" element={<GradeDetails />} />
         </Route>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
   );

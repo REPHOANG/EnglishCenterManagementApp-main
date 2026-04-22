@@ -6,6 +6,8 @@ const {
   getUserById,
   updateUserById,
   GetUserByRoleId,
+  forgotPassword,
+  resetPassword,
 } = require("../controllers/userController");
 const userRouter = express.Router();
 
@@ -116,5 +118,55 @@ userRouter.get("/:id", getUserById);
  *         description: List of all users
  */
 userRouter.get("/", getAllUser);
+
+/**
+ * @swagger
+ * /users/forgot-password:
+ *   post:
+ *     summary: Send password reset email
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Reset link sent (if email exists)
+ */
+userRouter.post("/forgot-password", forgotPassword);
+
+/**
+ * @swagger
+ * /users/reset-password/{token}:
+ *   post:
+ *     summary: Reset user password using token
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *       400:
+ *         description: Invalid or expired token
+ */
+userRouter.post("/reset-password/:token", resetPassword);
 
 module.exports = userRouter;
