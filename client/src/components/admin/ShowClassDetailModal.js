@@ -25,6 +25,9 @@ export default function ShowClassDetailModal({ classData, onClose }) {
     handleDeleteSchedule,
     startEditSchedule,
     cancelEdit,
+    generateSchedule,
+    setGenerateSchedule,
+    handleGenerateSchedules,
   } = useClassDetail(classData);
 
   if (!classData) return null;
@@ -268,6 +271,64 @@ export default function ShowClassDetailModal({ classData, onClose }) {
                           Cancel
                         </button>
                       )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Auto-Generate Form */}
+                <div className={`p-5 rounded-2xl border transition-all bg-slate-50 border-slate-200`}>
+                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <CalendarDays size={16} className="text-emerald-500" /> Auto-Generate Recurring Slots
+                  </h3>
+                  <p className="text-xs text-slate-500 mb-4">Automatically generate schedule slots for every selected day of the week between the class start and end dates.</p>
+                  <div className="flex flex-wrap items-end gap-4">
+                    <div className="flex-1 min-w-[150px]">
+                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Day of Week</label>
+                      <select
+                        className="w-full border border-slate-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all appearance-none bg-white"
+                        value={generateSchedule.dayOfWeek}
+                        onChange={(e) => setGenerateSchedule({...generateSchedule, dayOfWeek: e.target.value})}
+                      >
+                        <option value="">Select Day</option>
+                        <option value="1">Monday</option>
+                        <option value="2">Tuesday</option>
+                        <option value="3">Wednesday</option>
+                        <option value="4">Thursday</option>
+                        <option value="5">Friday</option>
+                        <option value="6">Saturday</option>
+                        <option value="0">Sunday</option>
+                      </select>
+                    </div>
+                    <div className="flex-1 min-w-[150px]">
+                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Time Slot</label>
+                      <select
+                        className="w-full border border-slate-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all appearance-none bg-white"
+                        value={generateSchedule.slotId}
+                        onChange={(e) => setGenerateSchedule({...generateSchedule, slotId: e.target.value})}
+                      >
+                        <option value="">Select Slot</option>
+                        {slots.map(s => <option key={s._id} value={s._id}>{s.from} - {s.to}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex-1 min-w-[150px]">
+                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Room</label>
+                      <select
+                        className="w-full border border-slate-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all appearance-none bg-white"
+                        value={generateSchedule.roomId}
+                        onChange={(e) => setGenerateSchedule({...generateSchedule, roomId: e.target.value})}
+                      >
+                        <option value="">Select Room</option>
+                        {rooms.map(r => <option key={r._id} value={r._id}>{r.name} ({r.type})</option>)}
+                      </select>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleGenerateSchedules}
+                        disabled={loading}
+                        className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:shadow-emerald-500/30 text-white font-medium rounded-xl shadow-md transition-all text-sm disabled:opacity-50 flex items-center justify-center min-w-[100px]"
+                      >
+                        Generate
+                      </button>
                     </div>
                   </div>
                 </div>

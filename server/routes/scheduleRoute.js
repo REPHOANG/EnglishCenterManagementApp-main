@@ -5,6 +5,7 @@ const {
   updateSchedule,
   deleteSchedule,
   getSchedulesByClassId,
+  generateSchedules,
 } = require("../controllers/scheduleController");
 
 const scheduleRouter = express.Router();
@@ -38,6 +39,8 @@ scheduleRouter.get("/", getAllSchedule);
  *         description: Schedule created
  */
 scheduleRouter.post("/add", createSchedule);
+
+scheduleRouter.post("/generate", generateSchedules);
 
 scheduleRouter.put("/update/:id", updateSchedule);
 

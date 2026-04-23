@@ -3,7 +3,6 @@ import axios from "axios";
 import { Plus, Search, Eye, Trash2, X, Edit2, CalendarPlus, BookOpen, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "../../layouts/AdminLayout";
-import ShowClassDetailModal from "../../components/admin/ShowClassDetailModal";
 
 const STATUS_COLORS = {
   ongoing: "bg-blue-100 text-blue-700",
@@ -17,9 +16,6 @@ export default function ClassManagement() {
   const [classes, setClasses] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
-  const [showDetail, setShowDetail] = useState(false);
-  const [selected, setSelected] = useState(null);
-  const [hoverRow, setHoverRow] = useState(null);
 
   useEffect(() => {
     fetchClasses();
@@ -196,7 +192,7 @@ export default function ClassManagement() {
                           <Edit2 size={16} />
                         </button>
                         <button
-                          onClick={() => { setSelected(cl); setShowDetail(true); }}
+                          onClick={() => nav(`/admin/classes/${cl._id}`)}
                           className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-sky-600 hover:bg-sky-50 hover:border-sky-200 border border-transparent transition-all"
                           title="View"
                         >
@@ -235,16 +231,6 @@ export default function ClassManagement() {
           )}
         </div>
       </div>
-
-      {showDetail && selected && (
-        <ShowClassDetailModal
-          classData={selected}
-          onClose={() => {
-            setShowDetail(false);
-            setSelected(null);
-          }}
-        />
-      )}
     </AdminLayout>
   );
 }

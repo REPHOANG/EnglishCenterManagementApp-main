@@ -28,6 +28,7 @@ import Dashboard from "./pages/admin/DashBoard";
 import CourseManagement from "./pages/admin/CourseManagement";
 import ClassesManagement from "./pages/admin/ClassesManagement";
 import ClassForm from "./pages/admin/ClassForm";
+import ClassDetail from "./pages/admin/ClassDetail";
 import RoomManagement from "./pages/admin/RoomManagement";
 import GradesOverview from "./pages/admin/GradesOverview";
 import UserManagement from "./pages/admin/UserManagement";
@@ -96,6 +97,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ClassForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/classes/:id"
+          element={
+            <ProtectedRoute>
+              <ClassDetail />
             </ProtectedRoute>
           }
         />

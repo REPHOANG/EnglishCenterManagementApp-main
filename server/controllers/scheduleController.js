@@ -319,6 +319,103 @@ const getStudentSchedule = async (req, res) => {
   }
 };
 
+const generateSchedules = async (req, res) => {
+  try {
+    const { classId, dayOfWeek, slotId, roomId } = req.body;
+
+    const targetClass = await Class.findById(classId);
+    if (!targetClass) {
+      return res.status(404).json({ success: false, message: "Class not found" });
+    }
+
+    if (!targetClass.startDate || !targetClass.endDate) {
+      return res.status(400).json({ success: false, message: "Class must have a start and end date" });
+    }
+
+    const start = new Date(targetClass.startDate);
+    const end = new Date(targetClass.endDate);
+    const day = parseInt(dayOfWeek); // 0 (Sunday) to 6 (Saturday)
+
+    if (isNaN(day) || day < 0 || day > 6) {
+      return res.status(400).json({ success: false, message: "Invalid day of week" });
+    }
+
+    let currentDate = new Date(start);
+    currentDate.setHours(0, 0, 0, 0);
+    
+    // Find first matching day
+    while (currentDate.getDay() !== day) {
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    const createdSchedules = [];
+    const conflicts = [];
+    const teacherIds = targetClass.teachers || [];
+
+    while (currentDate <= end) {
+      const scheduleDate = new Date(currentDate);
+      
+      // 1. Check if already exists for this exact class, date, slot
+      const existing = await Schedule.findOne({ classId, slotId, date: scheduleDate });
+      
+      if (!existing) {
+        // 2. Check room conflict
+        const roomConflict = await Schedule.findOne({
+          roomId,
+          slotId,
+          date: scheduleDate,
+        });
+
+        let hasTeacherConflict = false;
+        if (teacherIds.length > 0) {
+          const concurrentSchedules = await Schedule.find({
+            slotId,
+            date: scheduleDate,
+          }).populate("classId");
+
+          for (const sched of concurrentSchedules) {
+            if (sched.classId && sched.classId.teachers) {
+              if (sched.classId.teachers.some(t => teacherIds.includes(t))) {
+                hasTeacherConflict = true;
+                break;
+              }
+            }
+          }
+        }
+
+        if (roomConflict || hasTeacherConflict) {
+          conflicts.push(scheduleDate.toISOString().split('T')[0]);
+        } else {
+          // Create schedule
+          const newSchedule = new Schedule({
+            slotId,
+            classId,
+            roomId,
+            date: scheduleDate,
+          });
+          const saved = await newSchedule.save();
+          createdSchedules.push(saved);
+        }
+      }
+
+      currentDate.setDate(currentDate.getDate() + 7);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: `Generated ${createdSchedules.length} schedules. ${conflicts.length} conflicts skipped.`,
+      data: { createdCount: createdSchedules.length, conflicts },
+    });
+  } catch (error) {
+    console.error("Error generating schedules:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllSchedule,
   createSchedule,
@@ -326,4 +423,5 @@ module.exports = {
   deleteSchedule,
   getStudentSchedule,
   getSchedulesByClassId,
+  generateSchedules,
 };
