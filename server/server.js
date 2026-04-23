@@ -39,6 +39,7 @@ app.use("/api/teacher", require("./routes/teacherRoute"));
 app.use("/api/student", studentRoute);
 app.use("/api/grades", require("./routes/gradeRoute"));
 app.use("/api/documents", require("./routes/documentRoute"));
+app.use("/api/submissions", require("./routes/submissionRoute"));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/", (req, res) => {

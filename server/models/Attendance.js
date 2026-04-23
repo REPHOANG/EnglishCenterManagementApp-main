@@ -10,9 +10,9 @@ const attendanceRecordSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["present", "absent", "late"],
+      enum: ["present", "absent", "late", "not_yet"],
       required: true,
-      default: "absent",
+      default: "not_yet",
     },
     note: {
       type: String,

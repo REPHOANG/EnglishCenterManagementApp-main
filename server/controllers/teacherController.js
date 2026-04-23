@@ -471,7 +471,7 @@ const getAttendanceBySchedule = async (req, res) => {
         studentId: s._id,
         studentName: s.fullName,
         email: s.email,
-        status: existing ? existing.status : 'absent',
+        status: existing ? existing.status : 'not_yet',
         note: existing ? existing.note : '',
       };
     });
@@ -497,10 +497,10 @@ const takeAttendance = async (req, res) => {
       return res.status(400).json({ success: false, message: 'records array is required' });
     }
 
-    const validStatuses = ['present', 'absent', 'late'];
+    const validStatuses = ['present', 'absent', 'late', 'not_yet'];
     for (const r of records) {
       if (!r.studentId || !validStatuses.includes(r.status)) {
-        return res.status(400).json({ success: false, message: 'Invalid record: studentId and status (present|absent|late) are required' });
+        return res.status(400).json({ success: false, message: 'Invalid record: studentId and status (present|absent|late|not_yet) are required' });
       }
     }
 

@@ -1,12 +1,102 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { FileText, Upload, Trash2, Download, Calendar, FileType2, Plus } from "lucide-react";
+import { FileText, Upload, Trash2, Download, Calendar, FileType2, Plus, Eye, AlertCircle, X, Save } from "lucide-react";
+
+const AssignmentSubmissionsList = ({ documentId, deadline, onClose }) => {
+  const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchSubmissions = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`http://localhost:9999/api/submissions/assignment/${documentId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data?.success) {
+        setSubmissions(res.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubmissions();
+  }, [documentId]);
+
+  const handleGrade = async (subId, grade, feedback) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.put(`http://localhost:9999/api/submissions/${subId}/grade`, { grade, feedback }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data?.success) {
+        alert("Đã lưu điểm thành công");
+        fetchSubmissions();
+      }
+    } catch (error) {
+      console.error("Error grading submission:", error);
+      alert("Lỗi khi lưu điểm");
+    }
+  };
+
+  if (loading) return <div style={{ padding: "16px", color: "#64748b", fontSize: "13px" }}>Đang tải danh sách bài nộp...</div>;
+
+  return (
+    <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0", marginTop: "12px", position: "relative" }}>
+      <button onClick={onClose} style={{ position: "absolute", top: "12px", right: "12px", background: "transparent", border: "none", cursor: "pointer", color: "#64748b" }}><X size={16} /></button>
+      <h4 style={{ margin: "0 0 16px 0", fontSize: "14px", color: "#334155" }}>Danh sách bài nộp ({submissions.length})</h4>
+      
+      {submissions.length === 0 ? (
+        <div style={{ color: "#94a3b8", fontSize: "13px", fontStyle: "italic" }}>Chưa có học viên nào nộp bài.</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          {submissions.map(sub => {
+            const isLate = deadline && new Date(sub.submittedAt) > new Date(deadline);
+            return (
+              <div key={sub._id} style={{ background: "#fff", padding: "12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: "14px", color: "#0f172a" }}>{sub.studentId?.fullName}</div>
+                    <div style={{ fontSize: "12px", color: "#64748b" }}>
+                      Thời gian nộp: {new Date(sub.submittedAt).toLocaleString("vi-VN")}
+                      {isLate && <span style={{ marginLeft: "8px", color: "#ef4444", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "4px" }}><AlertCircle size={12}/> Nộp trễ</span>}
+                    </div>
+                  </div>
+                  <a href={`http://localhost:9999/api/submissions/file/${sub._id}`} target="_blank" rel="noreferrer" style={{ fontSize: "12px", color: "#0284c7", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <Download size={14} /> Tải bài làm
+                  </a>
+                </div>
+                
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  handleGrade(sub._id, e.target.grade.value, e.target.feedback.value);
+                }} style={{ display: "flex", gap: "8px", alignItems: "flex-start", marginTop: "12px", borderTop: "1px dashed #e2e8f0", paddingTop: "12px" }}>
+                  <div style={{ flex: 1 }}>
+                    <input type="number" name="grade" defaultValue={sub.grade !== null ? sub.grade : ""} step="0.1" min="0" max="10" placeholder="Điểm (0-10)" style={{ width: "100px", padding: "6px 8px", borderRadius: "4px", border: "1px solid #cbd5e1", fontSize: "13px", marginBottom: "6px", boxSizing: "border-box" }} required />
+                    <input type="text" name="feedback" defaultValue={sub.feedback} placeholder="Nhận xét..." style={{ width: "100%", padding: "6px 8px", borderRadius: "4px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }} />
+                  </div>
+                  <button type="submit" style={{ display: "flex", alignItems: "center", gap: "4px", background: "#10b981", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", fontSize: "13px", fontWeight: 600, cursor: "pointer", height: "fit-content" }}>
+                    <Save size={14} /> Lưu
+                  </button>
+                </form>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const DocumentManager = ({ classId }) => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
+  const [viewingSubmissionsId, setViewingSubmissionsId] = useState(null);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -234,7 +324,8 @@ const DocumentManager = ({ classId }) => {
       ) : (
         <div style={{ display: "grid", gap: "12px" }}>
           {documents.map((doc) => (
-            <div key={doc._id} style={{
+            <React.Fragment key={doc._id}>
+            <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "16px", borderRadius: "12px", border: "1px solid #e2e8f0",
               background: "#fff", transition: "box-shadow 0.2s"
@@ -284,6 +375,22 @@ const DocumentManager = ({ classId }) => {
                 >
                   <Download size={18} />
                 </a>
+                
+                {doc.type === "assignment" && (
+                  <button
+                    onClick={() => setViewingSubmissionsId(viewingSubmissionsId === doc._id ? null : doc._id)}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      width: "36px", height: "36px", borderRadius: "8px", border: "none", cursor: "pointer",
+                      background: viewingSubmissionsId === doc._id ? "#dcfce7" : "#f0fdf4", 
+                      color: "#16a34a", transition: "all 0.2s"
+                    }}
+                    title="Xem bài nộp"
+                  >
+                    <Eye size={18} />
+                  </button>
+                )}
+                
                 <button
                   onClick={() => handleDelete(doc._id)}
                   style={{
@@ -297,6 +404,14 @@ const DocumentManager = ({ classId }) => {
                 </button>
               </div>
             </div>
+            {viewingSubmissionsId === doc._id && (
+              <AssignmentSubmissionsList 
+                documentId={doc._id} 
+                deadline={doc.deadline} 
+                onClose={() => setViewingSubmissionsId(null)} 
+              />
+            )}
+            </React.Fragment>
           ))}
         </div>
       )}
