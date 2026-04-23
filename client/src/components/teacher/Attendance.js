@@ -3,9 +3,9 @@ import axios from "axios";
 import { CheckCircle, XCircle, Clock, Save, AlertTriangle, RefreshCw } from "lucide-react";
 
 const STATUS_CONFIG = {
-  present: { label: "Có mặt", icon: <CheckCircle size={14} />, color: "#10b981", bg: "#d1fae5", border: "#6ee7b7", activeColor: "#fff", activeBg: "#10b981" },
-  late:    { label: "Đi muộn", icon: <Clock size={14} />,        color: "#f59e0b", bg: "#fef3c7", border: "#fcd34d", activeColor: "#fff", activeBg: "#f59e0b" },
-  absent:  { label: "Vắng mặt", icon: <XCircle size={14} />,     color: "#ef4444", bg: "#fee2e2", border: "#fca5a5", activeColor: "#fff", activeBg: "#ef4444" },
+  present: { label: "Present", icon: <CheckCircle size={14} />, color: "#10b981", bg: "#d1fae5", border: "#6ee7b7", activeColor: "#fff", activeBg: "#10b981" },
+  late:    { label: "Late", icon: <Clock size={14} />,        color: "#f59e0b", bg: "#fef3c7", border: "#fcd34d", activeColor: "#fff", activeBg: "#f59e0b" },
+  absent:  { label: "Absent", icon: <XCircle size={14} />,     color: "#ef4444", bg: "#fee2e2", border: "#fca5a5", activeColor: "#fff", activeBg: "#ef4444" },
 };
 
 const card = {
@@ -99,7 +99,7 @@ const Attendance = ({ classId, teacherId }) => {
       }
     } catch (err) {
       console.error("Error saving attendance:", err);
-      alert("Lưu điểm danh thất bại. Vui lòng thử lại.");
+      alert("Failed to save attendance. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -111,8 +111,8 @@ const Attendance = ({ classId, teacherId }) => {
     return (
       <div style={{ textAlign: "center", padding: "60px 20px", color: "#94a3b8" }}>
         <AlertTriangle size={40} style={{ color: "#fbbf24", marginBottom: "12px" }} />
-        <div style={{ fontWeight: 600, fontSize: "15px", marginBottom: "6px" }}>Chưa có buổi học nào</div>
-        <div style={{ fontSize: "13px" }}>Vui lòng tạo lịch học (Schedule) cho lớp này trước.</div>
+        <div style={{ fontWeight: 600, fontSize: "15px", marginBottom: "6px" }}>No sessions available</div>
+        <div style={{ fontSize: "13px" }}>Please wait for a schedule to be generated for this class.</div>
       </div>
     );
   }
@@ -122,7 +122,7 @@ const Attendance = ({ classId, teacherId }) => {
       {/* ── Session Picker ── */}
       <div style={{ ...card, padding: "16px 20px", marginBottom: "16px", display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
         <div style={{ flex: 1, minWidth: "260px" }}>
-          <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "6px" }}>Chọn buổi học</label>
+          <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "6px" }}>Select Session</label>
           <select
             id="session-picker"
             value={selectedSession?.id || ""}
@@ -138,12 +138,12 @@ const Attendance = ({ classId, teacherId }) => {
         </div>
         {takenAt && (
           <span style={{ fontSize: "11px", color: "#94a3b8", fontStyle: "italic" }}>
-            Đã lưu: {new Date(takenAt).toLocaleString("vi-VN")}
+            Saved: {new Date(takenAt).toLocaleString("en-GB")}
           </span>
         )}
         <button
           onClick={() => fetchAttendance(selectedSession?.id)}
-          title="Tải lại"
+          title="Refresh"
           style={{ padding: "8px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#f8fafc", cursor: "pointer", display: "flex", alignItems: "center" }}
         >
           <RefreshCw size={15} color="#64748b" />
@@ -160,14 +160,14 @@ const Attendance = ({ classId, teacherId }) => {
           ))}
         </div>
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <span style={{ fontSize: "12px", color: "#94a3b8" }}>Điểm nhanh:</span>
+          <span style={{ fontSize: "12px", color: "#94a3b8" }}>Quick Mark:</span>
           {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
             <button
               key={key}
               onClick={() => markAll(key)}
               style={{ padding: "5px 12px", borderRadius: "8px", border: `1px solid ${cfg.border}`, background: cfg.bg, color: cfg.color, fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
             >
-              {cfg.label} tất cả
+              Mark all {cfg.label.toLowerCase()}
             </button>
           ))}
         </div>
@@ -175,17 +175,17 @@ const Attendance = ({ classId, teacherId }) => {
 
       {/* ── Attendance Table ── */}
       {loading ? (
-        <div style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>Đang tải danh sách học sinh...</div>
+        <div style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>Loading student list...</div>
       ) : (
         <div style={{ ...card, overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
             <thead>
               <tr style={{ background: "linear-gradient(135deg, #1e40af, #1d4ed8)", color: "#fff" }}>
                 <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, width: "36px" }}>#</th>
-                <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600 }}>Học sinh</th>
+                <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600 }}>Student Name</th>
                 <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600 }}>Email</th>
-                <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600, minWidth: "260px" }}>Trạng thái</th>
-                <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600 }}>Ghi chú</th>
+                <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600, minWidth: "260px" }}>Status</th>
+                <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600 }}>Note</th>
               </tr>
             </thead>
             <tbody>
@@ -224,7 +224,7 @@ const Attendance = ({ classId, teacherId }) => {
                     <td style={{ padding: "12px 16px" }}>
                       <input
                         type="text"
-                        placeholder="Ghi chú..."
+                        placeholder="Add a note..."
                         value={r.note || ""}
                         onChange={(e) => handleNoteChange(r.studentId, e.target.value)}
                         style={{ width: "100%", padding: "6px 10px", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "12px", background: "#f8fafc", outline: "none" }}
@@ -235,7 +235,7 @@ const Attendance = ({ classId, teacherId }) => {
               })}
               {records.length === 0 && (
                 <tr>
-                  <td colSpan={5} style={{ padding: "40px", textAlign: "center", color: "#94a3b8" }}>Chưa có học sinh trong lớp này.</td>
+                  <td colSpan={5} style={{ padding: "40px", textAlign: "center", color: "#94a3b8" }}>No students in this class.</td>
                 </tr>
               )}
             </tbody>
@@ -248,7 +248,7 @@ const Attendance = ({ classId, teacherId }) => {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "12px", marginTop: "20px" }}>
           {saveSuccess && (
             <span style={{ display: "flex", alignItems: "center", gap: "6px", color: "#10b981", fontSize: "13px", fontWeight: 500 }}>
-              <CheckCircle size={15} /> Lưu điểm danh thành công!
+              <CheckCircle size={15} /> Attendance saved successfully!
             </span>
           )}
           <button
@@ -266,7 +266,7 @@ const Attendance = ({ classId, teacherId }) => {
             }}
           >
             <Save size={16} />
-            {saving ? "Đang lưu..." : attendanceId ? "Cập nhật điểm danh" : "Lưu điểm danh"}
+            {saving ? "Saving..." : attendanceId ? "Update Attendance" : "Save Attendance"}
           </button>
         </div>
       )}

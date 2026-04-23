@@ -55,8 +55,8 @@ const getTeachingSchedule = async (req, res) => {
         name: item.classId?.name,
         course: item.classId?.courseId?.name
       },
-      // Format date as YYYY-MM-DD
-      date: item.date.toISOString().split('T')[0]
+      // Format date as YYYY-MM-DD in Vietnam timezone
+      date: new Date(item.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })
     }));
 
     res.status(200).json({
@@ -116,8 +116,8 @@ const getTeachingClasses = async (req, res) => {
       id: c._id,
       name: c.name,
       course: c.courseId.name,
-      startDate: c.startDate.toISOString().split('T')[0],
-      endDate: c.endDate.toISOString().split('T')[0],
+      startDate: new Date(c.startDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
+      endDate: new Date(c.endDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
       capacity: c.capacity,
       status: c.status
     }));
@@ -156,8 +156,8 @@ const getTeachingClassDetails = async (req, res) => {
       id: classDetails._id,
       name: classDetails.name,
       course: classDetails.courseId.name,
-      startDate: classDetails.startDate.toISOString().split('T')[0],
-      endDate: classDetails.endDate.toISOString().split('T')[0],
+      startDate: new Date(classDetails.startDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
+      endDate: new Date(classDetails.endDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
       capacity: classDetails.capacity,
       status: classDetails.status,
       teachers: classDetails.teachers.map(t => ({
@@ -170,7 +170,7 @@ const getTeachingClassDetails = async (req, res) => {
         name: s.fullName,
         email: s.email,
         number: s.number,
-        birthday: s.birthday.toISOString().split('T')[0]
+        birthday: s.birthday ? new Date(s.birthday).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }) : null
       }))
     };
 
@@ -437,7 +437,7 @@ const getClassSchedules = async (req, res) => {
 
     const formatted = schedules.map((s) => ({
       id: s._id,
-      date: s.date.toISOString().split('T')[0],
+      date: new Date(s.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
       slot: s.slotId ? { id: s.slotId._id, from: s.slotId.from, to: s.slotId.to } : null,
       room: s.roomId ? { id: s.roomId._id, name: s.roomId.name, location: s.roomId.location } : null,
     }));
@@ -584,7 +584,7 @@ const getStudentAttendance = async (req, res) => {
       return {
         attendanceId: att._id,
         scheduleId: att.scheduleId,
-        date: att.date ? att.date.toISOString().split('T')[0] : null,
+        date: att.date ? new Date(att.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }) : null,
         status,
         note,
       };

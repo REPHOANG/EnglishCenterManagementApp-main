@@ -148,9 +148,9 @@ const TeachingClassDetails = () => {
         {[
           { key: "students", label: "Students", icon: <UsersRound size={15} /> },
           { key: "grades", label: "Grades", icon: <ClipboardPenLine size={15} /> },
-          { key: "attendance", label: "Điểm danh", icon: <ClipboardCheck size={15} /> },
-          { key: "chart", label: "Biểu đồ", icon: <BarChart3 size={15} /> },
-          { key: "documents", label: "Tài liệu", icon: <FileBox size={15} /> },
+          { key: "attendance", label: "Attendance", icon: <ClipboardCheck size={15} /> },
+          { key: "chart", label: "Charts", icon: <BarChart3 size={15} /> },
+          { key: "documents", label: "Documents", icon: <FileBox size={15} /> },
         ].map(tab => (
           <button
             key={tab.key}

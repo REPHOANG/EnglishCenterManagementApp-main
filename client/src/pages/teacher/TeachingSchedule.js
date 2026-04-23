@@ -52,7 +52,10 @@ export default function TeachingSchedule() {
     return dayNames.map((label, i) => {
       const date = new Date(selectedWeek.start);
       date.setDate(selectedWeek.start.getDate() + i);
-      return { label, date: date.toISOString().split('T')[0] };
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return { label, date: `${year}-${month}-${day}` };
     });
   };
 
@@ -118,7 +121,11 @@ export default function TeachingSchedule() {
     });
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const t = new Date();
+  const yearStr = t.getFullYear();
+  const monthStr = String(t.getMonth() + 1).padStart(2, "0");
+  const dayStr = String(t.getDate()).padStart(2, "0");
+  const today = `${yearStr}-${monthStr}-${dayStr}`;
 
   return (
     <div>

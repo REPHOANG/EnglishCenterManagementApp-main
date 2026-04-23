@@ -283,7 +283,7 @@ const getClassesByUserId = async (req, res) => {
         id: s._id,
         name: s.fullName,
         email: s.email,
-        birthday: s.birthday ? s.birthday.toISOString().split("T")[0] : "N/A",
+        birthday: s.birthday ? new Date(s.birthday).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }) : "N/A",
       })),
     });
   } catch (error) {

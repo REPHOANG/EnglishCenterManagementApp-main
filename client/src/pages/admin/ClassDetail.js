@@ -14,13 +14,13 @@ const STATUS_COLORS = {
 };
 
 const DAYS = [
-  { value: "1", label: "Monday" },
-  { value: "2", label: "Tuesday" },
-  { value: "3", label: "Wednesday" },
-  { value: "4", label: "Thursday" },
-  { value: "5", label: "Friday" },
-  { value: "6", label: "Saturday" },
-  { value: "0", label: "Sunday" },
+  { value: "0", label: "Monday" },
+  { value: "1", label: "Tuesday" },
+  { value: "2", label: "Wednesday" },
+  { value: "3", label: "Thursday" },
+  { value: "4", label: "Friday" },
+  { value: "5", label: "Saturday" },
+  { value: "6", label: "Sunday" },
 ];
 
 export default function ClassDetail() {
@@ -149,8 +149,8 @@ export default function ClassDetail() {
                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Date</label>
                         <input
                           type="date"
-                          min={classData ? new Date(classData.startDate).toISOString().split("T")[0] : undefined}
-                          max={classData ? new Date(classData.endDate).toISOString().split("T")[0] : undefined}
+                          min={classData && classData.startDate ? new Date(classData.startDate).toLocaleDateString('en-CA') : undefined}
+                          max={classData && classData.endDate ? new Date(classData.endDate).toLocaleDateString('en-CA') : undefined}
                           className="w-full border border-slate-200 bg-slate-50 rounded-xl px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 transition-all"
                           value={newSchedule.date}
                           onChange={(e) => setNewSchedule({ ...newSchedule, date: e.target.value })}

@@ -300,8 +300,8 @@ const getStudentSchedule = async (req, res) => {
           name: student.fullName
         }))
       },
-      // Format date as YYYY-MM-DD
-      date: item.date.toISOString().split('T')[0]
+      // Format date as YYYY-MM-DD in Vietnam timezone to avoid UTC offset issues
+      date: new Date(item.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })
     }));
 
     res.status(200).json({

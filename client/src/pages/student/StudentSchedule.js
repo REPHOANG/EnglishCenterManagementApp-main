@@ -4,10 +4,10 @@ import { jwtDecode } from "jwt-decode";
 import { Calendar, ChevronLeft, ChevronRight, BookOpen, MapPin } from "lucide-react";
 
 const slotStartTimes = [
-  "08:00", "09:40", "13:00", "14:40", "18:00", "19:40",
+  "08:00", "09:45", "13:00", "14:45", "18:00", "19:45",
 ];
 const slotEndTimes = [
-  "09:30", "11:10", "14:30", "16:10", "19:30", "21:10",
+  "09:30", "11:15", "14:30", "16:15", "19:30", "21:15",
 ];
 const slotLabels = ["Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", "Slot 6"];
 const daysOfWeek = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -44,7 +44,13 @@ export default function StudentSchedule() {
     return result;
   };
 
-  const formatDate = (d) => (d instanceof Date && !isNaN(d)) ? d.toISOString().split("T")[0] : "";
+  const formatDate = (d) => {
+    if (!(d instanceof Date) || isNaN(d)) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
   const getDateByOffset = (start, offset) => {
     if (!start) return null;
     const d = new Date(start);
