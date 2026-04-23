@@ -32,8 +32,13 @@ const Grades = () => {
         setGradeList(grades);
       } catch (err) {
         console.error("Error fetching grades:", err);
-        setError("Failed to load grades.");
-        setGradeList([]);
+        if (err.response && err.response.status === 404) {
+          setGradeList([]);
+          setError(null);
+        } else {
+          setError("Failed to load grades.");
+          setGradeList([]);
+        }
       } finally {
         setLoading(false);
       }

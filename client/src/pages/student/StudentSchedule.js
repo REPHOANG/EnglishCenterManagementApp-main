@@ -231,18 +231,16 @@ export default function StudentSchedule() {
                   return (
                     <th key={day} style={{
                       padding: "12px 8px", textAlign: "center",
-                      background: isToday
-                        ? "linear-gradient(135deg,rgba(16,185,129,0.2),rgba(5,150,105,0.15))"
-                        : "linear-gradient(135deg,#0c1a2e,#0a2744)",
+                      background: "linear-gradient(135deg,#0c1a2e,#0a2744)",
                       borderRight: "1px solid rgba(255,255,255,0.06)",
-                      borderLeft: isToday ? "2px solid rgba(16,185,129,0.5)" : "none",
+                      borderTop: isToday ? "3px solid #10b981" : "3px solid transparent",
                     }}>
                       <div style={{
                         color: isToday ? "#34d399" : "rgba(255,255,255,0.75)",
                         fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px",
                       }}>{day}</div>
                       <div style={{
-                        color: isToday ? "#6ee7b7" : "rgba(255,255,255,0.35)",
+                        color: isToday ? "#34d399" : "rgba(255,255,255,0.35)",
                         fontSize: "10px", marginTop: "2px",
                       }}>
                         {date ? date.toLocaleDateString("en-GB") : ""}

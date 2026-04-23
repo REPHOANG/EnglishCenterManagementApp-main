@@ -97,14 +97,19 @@ const TeachingClassDetails = () => {
       {/* Class Info Card */}
       <div style={{ ...card, padding: "24px", marginBottom: "24px" }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: "20px", flexWrap: "wrap" }}>
-          {/* Icon */}
+          {/* Icon / Image */}
           <div style={{
             width: "56px", height: "56px", borderRadius: "14px",
             background: "linear-gradient(135deg, #0ea5e9, #0284c7)",
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0,
+            overflow: "hidden"
           }}>
-            <GraduationCap size={26} color="#fff" />
+            {classData?.courseImage ? (
+              <img src={classData.courseImage} alt="Course" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.target.style.display = 'none'; }} />
+            ) : (
+              <GraduationCap size={26} color="#fff" />
+            )}
           </div>
 
           <div style={{ flex: 1, minWidth: "200px" }}>

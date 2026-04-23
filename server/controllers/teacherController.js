@@ -141,7 +141,7 @@ const getTeachingClassDetails = async (req, res) => {
   try {
     const { classId } = req.params;
     const classDetails = await Class.findById(classId)
-      .populate('courseId', 'name')
+      .populate('courseId', 'name image')
       .populate('teachers', 'fullName email')
       .populate('students', 'fullName email number birthday');
 
@@ -156,6 +156,7 @@ const getTeachingClassDetails = async (req, res) => {
       id: classDetails._id,
       name: classDetails.name,
       course: classDetails.courseId.name,
+      courseImage: classDetails.courseId.image,
       startDate: new Date(classDetails.startDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
       endDate: new Date(classDetails.endDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
       capacity: classDetails.capacity,

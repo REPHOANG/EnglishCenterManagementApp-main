@@ -175,19 +175,25 @@ const getAllGradesOfAStudentInAllClasses = async (req, res) => {
       })
       .lean();
 
-    if (!grades || grades.length === 0) {
-      return res.status(404).json({
-        success: false,
+    // Lọc bỏ những grade  (class đã bị xóa)
+    const validGrades = grades.filter(
+      (grade) => grade.classId && grade.classId.courseId
+    );
+
+    if (!validGrades || validGrades.length === 0) {
+      return res.status(200).json({
+        success: true,
         message: "No grades found for this student",
+        data: [],
       });
     }
 
-    const formattedGrades = grades.map((grade) => ({
+    const formattedGrades = validGrades.map((grade) => ({
       classId: grade.classId._id,
       className: grade.classId.name,
-      courseName: grade.classId.courseId.name
-      
+      courseName: grade.classId.courseId.name,
     }));
+
     res.status(200).json({
       success: true,
       message: "Grades for the student retrieved successfully",
@@ -219,17 +225,22 @@ const getGradesOfAStudent = async (req, res) => {
         },
       })
       .lean();
-    if (!grades || grades.length === 0) {
-      return res.status(404).json({
-        success: false,
+    const validGrades = grades.filter(
+      (grade) => grade.classId && grade.classId.courseId
+    );
+
+    if (!validGrades || validGrades.length === 0) {
+      return res.status(200).json({
+        success: true,
         message: "No grades found for this student in the specified class",
+        data: [],
       });
     }
 
     res.status(200).json({
       success: true,
       message: "Grades for the student retrieved successfully",
-      data: grades,
+      data: validGrades,
     });
   } catch (error) {
     console.error("Error fetching grades for student:", error);

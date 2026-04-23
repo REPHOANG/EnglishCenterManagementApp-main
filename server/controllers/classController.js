@@ -216,22 +216,48 @@ const getAllClassesByUserId = async (req, res) => {
     const { studentId } = req.params;
 
     const classes = await Class.find()
-      .populate("courseId", "name")
+      .populate("courseId", "name image")
       .populate("teachers", "fullName")
       .populate("schedule.slot", "from to")
       .lean();
 
+    // Aggregate sessions for all classes
+    const allSessions = await Schedule.find({ classId: { $in: classes.map(c => c._id) } })
+      .populate("slotId", "from to")
+      .lean();
+
     const formattedClasses = classes
-      .filter((cls) => cls.students.some((s) => s.toString() === studentId))
-      .map((cls) => ({
-        _id: cls._id,
-        name: cls.name,
-        courseName: cls.courseId?.name || "N/A",
-        teachers: cls.teachers || [],
-        capacity: cls.capacity,
-        status: cls.status || "ongoing",
-        schedule: cls.schedule || [],
-      }));
+      .filter((cls) => (cls.students || []).some((s) => s.toString() === studentId))
+      .map((cls) => {
+        let displaySchedule = (cls.schedule || []).map((s) => ({
+          weekday: s.weekday,
+          slot: s.slot // keep for compatibility if needed
+        })).filter(s => s.slot && s.slot.from);
+
+        if (displaySchedule.length === 0) {
+          const sessions = allSessions.filter(s => s.classId?.toString() === cls._id.toString());
+          const summary = {};
+          sessions.forEach(s => {
+            if (s.slotId && s.date) {
+              const day = new Date(s.date).toLocaleDateString('en-US', { weekday: 'long' });
+              const key = `${day}-${s.slotId.from}-${s.slotId.to}`;
+              summary[key] = { weekday: day, slot: s.slotId };
+            }
+          });
+          displaySchedule = Object.values(summary);
+        }
+
+        return {
+          _id: cls._id,
+          name: cls.name,
+          courseName: cls.courseId?.name || "N/A",
+          courseImage: cls.courseId?.image,
+          teachers: cls.teachers || [],
+          capacity: cls.capacity,
+          status: cls.status || "ongoing",
+          schedule: displaySchedule,
+        };
+      });
 
     res.status(200).json({
       success: true,
@@ -265,11 +291,24 @@ const getClassesByUserId = async (req, res) => {
       return res.status(404).json({ message: "Class not found" });
     }
 
-    const scheduleFormatted = classData.schedule.map((item) => ({
+    let scheduleFormatted = (classData.schedule || []).map((item) => ({
       weekday: item.weekday,
       from: item.slot?.from || "N/A",
       to: item.slot?.to || "N/A",
-    }));
+    })).filter(s => s.from !== "N/A");
+
+    if (scheduleFormatted.length === 0) {
+      const sessions = await Schedule.find({ classId }).populate("slotId", "from to").lean();
+      const summary = {};
+      sessions.forEach(s => {
+        if (s.slotId && s.date) {
+          const day = new Date(s.date).toLocaleDateString('en-US', { weekday: 'long' });
+          const key = `${day}-${s.slotId.from}-${s.slotId.to}`;
+          summary[key] = { weekday: day, from: s.slotId.from, to: s.slotId.to };
+        }
+      });
+      scheduleFormatted = Object.values(summary);
+    }
 
     res.json({
       _id: classData._id,
@@ -297,30 +336,48 @@ const getRegisterableClasses = async (req, res) => {
     const { studentId } = req.params;
     //find all classes
     const classes = await Class.find()
-      .populate("courseId", "name")
+      .populate("courseId", "name image")
       .populate("teachers", "fullName")
-      .populate({
-        path: "schedule.slot",
-        model: "Slot",
-        select: "from to",
-      })
+      .populate("schedule.slot", "from to")
       .lean();
 
-    const registerableClasses = classes.map((cls) => ({
-      _id: cls._id,
-      name: cls.name,
-      courseName: cls.courseId?.name || "N/A",
-      teachers: cls.teachers.map((t) => t.fullName).join(", ") || "N/A",
-      capacity: cls.capacity,
-      schedule: cls.schedule.map((s) => ({
+    const allSessions = await Schedule.find({ classId: { $in: classes.map(c => c._id) } })
+      .populate("slotId", "from to")
+      .lean();
+
+    const registerableClasses = classes.map((cls) => {
+      let displaySchedule = (cls.schedule || []).map((s) => ({
         weekday: s.weekday,
         from: s.slot?.from || "N/A",
         to: s.slot?.to || "N/A",
-      })),
-      studentsCount: cls.students.length,
-      status: cls.status,
-      registered: cls.students.toString().includes(studentId),
-    }));
+      })).filter(s => s.from !== "N/A");
+
+      if (displaySchedule.length === 0) {
+        const sessions = allSessions.filter(s => s.classId?.toString() === cls._id.toString());
+        const summary = {};
+        sessions.forEach(s => {
+          if (s.slotId && s.date) {
+            const day = new Date(s.date).toLocaleDateString('en-US', { weekday: 'long' });
+            const key = `${day}-${s.slotId.from}-${s.slotId.to}`;
+            summary[key] = { weekday: day, from: s.slotId.from, to: s.slotId.to };
+          }
+        });
+        displaySchedule = Object.values(summary);
+      }
+
+      return {
+        _id: cls._id,
+        name: cls.name,
+        courseName: cls.courseId?.name || "N/A",
+        courseImage: cls.courseId?.image,
+        teachers: cls.teachers.map((t) => t.fullName).join(", ") || "N/A",
+        capacity: cls.capacity,
+        schedule: displaySchedule,
+        studentsCount: (cls.students || []).length,
+        status: cls.status,
+        registered: (cls.students || []).toString().includes(studentId),
+      };
+    });
 
     res.status(200).json(registerableClasses);
   } catch (error) {

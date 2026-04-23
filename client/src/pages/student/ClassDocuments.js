@@ -48,13 +48,13 @@ const ClassDocuments = () => {
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 text-gray-500 hover:text-blue-600 mb-6 transition-colors font-medium text-sm"
       >
-        <ArrowLeft size={16} /> Quay lại lớp học
+        <ArrowLeft size={16} /> Back to Class
       </button>
 
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Tài liệu & Bài tập</h1>
-          <p className="text-gray-500 text-sm mt-1">Danh sách tài liệu học tập được chia sẻ bởi giáo viên</p>
+          <h1 className="text-2xl font-bold text-gray-800">Documents & Exercises</h1>
+          <p className="text-gray-500 text-sm mt-1">List of learning materials shared by the teacher</p>
         </div>
         
         <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border">
@@ -64,20 +64,20 @@ const ClassDocuments = () => {
             onChange={(e) => setFilter(e.target.value)}
             className="bg-transparent border-none text-sm font-medium text-gray-700 outline-none pr-4 py-2 cursor-pointer"
           >
-            <option value="all">Tất cả tài liệu</option>
-            <option value="material">Chỉ tài liệu học</option>
-            <option value="assignment">Chỉ bài tập</option>
+            <option value="all">All Documents</option>
+            <option value="material">Materials Only</option>
+            <option value="assignment">Assignments Only</option>
           </select>
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Đang tải tài liệu...</div>
+        <div className="text-center py-12 text-gray-500">Loading documents...</div>
       ) : filteredDocs.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 shadow-sm border border-gray-100 text-center flex flex-col items-center">
           <FileText size={64} className="text-gray-300 mb-4" />
-          <div className="text-gray-600 font-medium text-lg">Chưa có tài liệu nào</div>
-          <div className="text-gray-400 text-sm mt-1">Giáo viên chưa tải lên tài liệu hoặc bài tập nào cho lớp này.</div>
+          <div className="text-gray-600 font-medium text-lg">No documents found</div>
+          <div className="text-gray-400 text-sm mt-1">The teacher has not uploaded any materials or assignments for this class yet.</div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -95,7 +95,7 @@ const ClassDocuments = () => {
                     <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${
                       doc.type === "assignment" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
                     }`}>
-                      {doc.type === "assignment" ? "Bài tập" : "Tài liệu"}
+                      {doc.type === "assignment" ? "Assignment" : "Material"}
                     </span>
                   </h3>
                   {doc.description && (
@@ -111,7 +111,7 @@ const ClassDocuments = () => {
                   </span>
                   {doc.type === "assignment" && doc.deadline && (
                     <span className="text-xs font-semibold text-orange-600 flex items-center gap-1">
-                      <Calendar size={12} /> Hạn nộp: {new Date(doc.deadline).toLocaleString("vi-VN")}
+                      <Calendar size={12} /> Deadline: {new Date(doc.deadline).toLocaleString("en-US")}
                     </span>
                   )}
                 </div>
@@ -121,7 +121,7 @@ const ClassDocuments = () => {
                   target="_blank" rel="noreferrer"
                   className="flex items-center gap-2 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
                 >
-                  <Download size={16} /> Tải xuống
+                  <Download size={16} /> Download
                 </a>
               </div>
             </div>

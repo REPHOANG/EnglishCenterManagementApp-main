@@ -169,8 +169,14 @@ const RegisterClass = () => {
               onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)"; e.currentTarget.style.transform = "none"; }}
             >
-              {/* Card top accent */}
-              <div style={{ height: "4px", background: "linear-gradient(90deg,#10b981,#059669)" }} />
+              {/* Card Image */}
+              {cls.courseImage ? (
+                <div style={{ height: "120px", width: "100%", overflow: "hidden" }}>
+                  <img src={cls.courseImage} alt="Course" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.target.style.display = 'none'; }} />
+                </div>
+              ) : (
+                <div style={{ height: "4px", background: "linear-gradient(90deg,#10b981,#059669)" }} />
+              )}
 
               <div style={{ padding: "18px", flex: 1 }}>
                 {/* Class name & status */}
@@ -199,16 +205,20 @@ const RegisterClass = () => {
                   {Array.isArray(cls.schedule) && cls.schedule.length > 0 && (
                     <div style={{ display: "flex", gap: "6px", fontSize: "12px", color: "#475569" }}>
                       <span style={{ fontWeight: 600, color: "#94a3b8", minWidth: "70px" }}>Schedule</span>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1 }}>
                         {cls.schedule.map((s, i) => (
-                          <span key={i}>
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                             <span style={{
-                              background: "#e0f2fe", color: "#0284c7",
-                              fontSize: "10px", fontWeight: 600,
-                              padding: "1px 5px", borderRadius: "4px", marginRight: "5px",
+                              background: "rgba(14,165,233,0.1)", color: "#0284c7",
+                              fontSize: "10px", fontWeight: 700,
+                              padding: "1px 6px", borderRadius: "4px",
+                              minWidth: "35px", textAlign: "center",
+                              textTransform: "uppercase"
                             }}>{s.weekday?.slice(0, 3)}</span>
-                            {s.from} - {s.to}
-                          </span>
+                            <span style={{ fontSize: "12px", color: "#475569", fontWeight: 500 }}>
+                              {s.from} - {s.to}
+                            </span>
+                          </div>
                         ))}
                       </div>
                     </div>

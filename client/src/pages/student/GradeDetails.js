@@ -43,7 +43,12 @@ const GradeDetails = () => {
         setLoading(false);
       } catch (err) {
         console.error("Error fetching grade details:", err);
-        setError("Failed to load grade details.");
+        if (err.response && err.response.status === 404) {
+          setGradeDetails(null);
+          setError(null);
+        } else {
+          setError("Failed to load grade details.");
+        }
         setLoading(false);
       }
     };
