@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Calendar, GraduationCap, BookOpen, ChevronRight } from "lucide-react";
+import { Calendar, GraduationCap, BookOpen, ChevronRight, ClipboardCheck } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 
 export default function Sidebar() {
@@ -13,6 +13,7 @@ export default function Sidebar() {
     { icon: <Calendar size={18} />, text: "Teaching Schedule", link: "/teacher/schedule" },
     { icon: <GraduationCap size={18} />, text: "My Classes", link: "/teacher/classes" },
     { icon: <BookOpen size={18} />, text: "Courses", link: "/teacher/courses" },
+    { icon: <ClipboardCheck size={18} />, text: "Điểm Danh", link: "/teacher/classes" },
   ];
 
 

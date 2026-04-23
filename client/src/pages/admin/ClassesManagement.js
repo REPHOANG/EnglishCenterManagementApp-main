@@ -1,22 +1,17 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Plus, Search, Eye, Trash2, X, Edit, CalendarPlus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import AdminLayout from "../../layouts/AdminLayout";
-import AddClassModal from "../../components/admin/AddClassModal";
-import UpdateClassModal from "../../components/admin/UpdateClassModal";
 import ShowClassDetailModal from "../../components/admin/ShowClassDetailModal";
-import AddScheduleModal from "../../components/admin/AddScheduleModal";
 
 export default function ClassManagement() {
+  const nav = useNavigate();
   const [classes, setClasses] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
-  const [showAdd, setShowAdd] = useState(false);
-  const [showUpdate, setShowUpdate] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [selectedClassId, setSelectedClassId] = useState(null);
-  const [openScheduleModal, setOpenScheduleModal] = useState(false);
 
   useEffect(() => {
     fetchClasses();
@@ -34,26 +29,6 @@ export default function ClassManagement() {
     }
   };
 
-  const handleAdd = async (payload) => {
-    try {
-      const token = localStorage.getItem("token");
-      const { data } = await axios.post(
-        "http://localhost:9999/api/classes/add",
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (data.success) {
-        fetchClasses();
-        setShowAdd(false);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this class?")) return;
@@ -86,7 +61,7 @@ export default function ClassManagement() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">Classes</h2>
           <button
-            onClick={() => setShowAdd(true)}
+            onClick={() => nav("/admin/classes/add")}
             className="flex items-center gap-2 px-5 py-2 bg-blue-500 text-white rounded shadow"
           >
             <Plus className="w-5 h-5" />
@@ -167,10 +142,7 @@ export default function ClassManagement() {
                     <button
                       className="text-gray-600 hover:text-blue-600"
                       title="Edit"
-                      onClick={() => {
-                        setSelected(cl);
-                        setShowUpdate(true);
-                      }}
+                      onClick={() => nav(`/admin/classes/edit/${cl._id}`)}
                     >
                       <Edit className="w-5 h-5" />
                     </button>
@@ -182,16 +154,6 @@ export default function ClassManagement() {
                       }}
                     >
                       <Eye className="w-5 h-5" />
-                    </button>
-                    <button
-                      className="text-gray-600 hover:text-green-600"
-                      title="Add Schedule"
-                      onClick={() => {
-                        setSelectedClassId(cl._id);
-                        setOpenScheduleModal(true);
-                      }}
-                    >
-                      <CalendarPlus className="w-5 h-5" />
                     </button>
                     <button
                       className="text-gray-600 hover:text-red-500"
@@ -215,21 +177,6 @@ export default function ClassManagement() {
       </div>
 
       {/* Modals */}
-      {showAdd && (
-        <AddClassModal onClose={() => setShowAdd(false)} onCreate={handleAdd} />
-      )}
-      {showUpdate && selected && (
-        <UpdateClassModal
-          classData={selected}
-          onClose={() => {
-            setShowUpdate(false);
-            setSelected(null);
-          }}
-          onUpdate={(u) =>
-            setClasses((prev) => prev.map((c) => (c._id === u._id ? u : c)))
-          }
-        />
-      )}
       {showDetail && selected && (
         <ShowClassDetailModal
           classData={selected}
@@ -239,11 +186,6 @@ export default function ClassManagement() {
           }}
         />
       )}
-      <AddScheduleModal
-        isOpen={openScheduleModal}
-        onClose={() => setOpenScheduleModal(false)}
-        classId={selectedClassId}
-      />
     </AdminLayout>
   );
 }

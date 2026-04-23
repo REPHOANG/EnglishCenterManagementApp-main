@@ -26,11 +26,57 @@ const createSchedule = async (req, res) => {
   try {
     const { slotId, classId, roomId, date, meeting } = req.body;
 
+    const scheduleDate = new Date(date);
+    scheduleDate.setHours(0, 0, 0, 0); // normalize date
+
+    // 1. Room Conflict
+    const roomConflict = await Schedule.findOne({
+      roomId,
+      slotId,
+      date: {
+        $gte: scheduleDate,
+        $lt: new Date(scheduleDate.getTime() + 24 * 60 * 60 * 1000),
+      },
+    });
+
+    if (roomConflict) {
+      return res.status(400).json({
+        success: false,
+        message: "Room is already booked for this slot and date.",
+      });
+    }
+
+    // 2. Teacher Conflict
+    const targetClass = await Class.findById(classId);
+    if (targetClass && targetClass.teachers && targetClass.teachers.length > 0) {
+      const teacherIds = targetClass.teachers;
+      
+      const concurrentSchedules = await Schedule.find({
+        slotId,
+        date: {
+          $gte: scheduleDate,
+          $lt: new Date(scheduleDate.getTime() + 24 * 60 * 60 * 1000),
+        },
+      }).populate("classId");
+
+      for (const sched of concurrentSchedules) {
+        if (sched.classId && sched.classId.teachers) {
+           const hasConflict = sched.classId.teachers.some(t => teacherIds.includes(t));
+           if (hasConflict) {
+              return res.status(400).json({
+                success: false,
+                message: "One or more teachers are already booked for this slot and date.",
+              });
+           }
+        }
+      }
+    }
+
     const newCourse = new Schedule({
       slotId,
       classId,
       roomId,
-      date,
+      date: scheduleDate,
       meeting,
     });
 
@@ -56,9 +102,57 @@ const updateSchedule = async (req, res) => {
     const { id } = req.params;
     const { slotId, classId, roomId, date, meeting } = req.body;
 
+    const scheduleDate = new Date(date);
+    scheduleDate.setHours(0, 0, 0, 0);
+
+    // 1. Room Conflict (exclude current schedule)
+    const roomConflict = await Schedule.findOne({
+      _id: { $ne: id },
+      roomId,
+      slotId,
+      date: {
+        $gte: scheduleDate,
+        $lt: new Date(scheduleDate.getTime() + 24 * 60 * 60 * 1000),
+      },
+    });
+
+    if (roomConflict) {
+      return res.status(400).json({
+        success: false,
+        message: "Room is already booked for this slot and date.",
+      });
+    }
+
+    // 2. Teacher Conflict (exclude current schedule)
+    const targetClass = await Class.findById(classId);
+    if (targetClass && targetClass.teachers && targetClass.teachers.length > 0) {
+      const teacherIds = targetClass.teachers;
+      
+      const concurrentSchedules = await Schedule.find({
+        _id: { $ne: id },
+        slotId,
+        date: {
+          $gte: scheduleDate,
+          $lt: new Date(scheduleDate.getTime() + 24 * 60 * 60 * 1000),
+        },
+      }).populate("classId");
+
+      for (const sched of concurrentSchedules) {
+        if (sched.classId && sched.classId.teachers) {
+           const hasConflict = sched.classId.teachers.some(t => teacherIds.includes(t));
+           if (hasConflict) {
+              return res.status(400).json({
+                success: false,
+                message: "One or more teachers are already booked for this slot and date.",
+              });
+           }
+        }
+      }
+    }
+
     const updateSchedule = await Schedule.findOneAndUpdate(
-      { id: id },
-      { slotId, classId, roomId, date, meeting },
+      { _id: id },
+      { slotId, classId, roomId, date: scheduleDate, meeting },
       { new: true, runValidators: true }
     );
 
@@ -88,7 +182,7 @@ const deleteSchedule = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deleteSchedule = await Schedule.findOneAndDelete({ id: id });
+    const deleteSchedule = await Schedule.findOneAndDelete({ _id: id });
 
     if (!deleteSchedule) {
       return res.status(404).json({
@@ -104,6 +198,34 @@ const deleteSchedule = async (req, res) => {
     });
   } catch (error) {
     console.error("Error deleting course:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const getSchedulesByClassId = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(classId)) {
+      return res.status(400).json({ success: false, message: "Invalid class ID" });
+    }
+
+    const schedules = await Schedule.find({ classId })
+      .populate("slotId", "from to")
+      .populate("roomId", "name location type")
+      .sort({ date: 1 });
+
+    res.status(200).json({
+      success: true,
+      message: "Schedules retrieved successfully",
+      data: schedules,
+    });
+  } catch (error) {
+    console.error("Error getting schedules by class:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -203,4 +325,5 @@ module.exports = {
   updateSchedule,
   deleteSchedule,
   getStudentSchedule,
+  getSchedulesByClassId,
 };

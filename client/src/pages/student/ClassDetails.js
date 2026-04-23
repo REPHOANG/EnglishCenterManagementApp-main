@@ -161,112 +161,37 @@ const ClassDetails = () => {
         ))}
       </div>
 
-      {/* Schedule */}
-      {Array.isArray(classData.schedule) && classData.schedule.length > 0 && (
-        <div style={{
-          background: "#fff", borderRadius: "14px", padding: "20px",
-          border: "1px solid rgba(0,0,0,0.05)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-          marginBottom: "24px",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
-            <Calendar size={16} color="#059669" />
-            <span style={{ fontWeight: 700, fontSize: "14px", color: "#0f172a" }}>Schedule</span>
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-            {classData.schedule.map((s, idx) => (
-              <div key={idx} style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                background: "#f0fdf4",
-                border: "1px solid #bbf7d0",
-                borderRadius: "8px", padding: "8px 14px",
-              }}>
-                <span style={{
-                  background: "#10b981", color: "#fff",
-                  fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "5px",
-                }}>
-                  {s.weekday?.slice(0, 3)}
-                </span>
-                <span style={{ fontSize: "12px", color: "#065f46", fontWeight: 500 }}>
-                  {s.from && s.to ? `${s.from} - ${s.to}` : "Time N/A"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Student List */}
-      <div style={{
-        background: "#fff", borderRadius: "14px",
-        border: "1px solid rgba(0,0,0,0.05)", boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-        overflow: "hidden",
-      }}>
-        <div style={{
-          padding: "16px 20px", borderBottom: "1px solid #f1f5f9",
-          display: "flex", alignItems: "center", gap: "8px",
-        }}>
-          <User size={16} color="#059669" />
-          <span style={{ fontWeight: 700, fontSize: "14px", color: "#0f172a" }}>
-            Student List
-          </span>
-          <span style={{
-            background: "rgba(16,185,129,0.1)", color: "#059669",
-            fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "12px",
-          }}>
-            {students.length}
-          </span>
-        </div>
-
-        {students.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#94a3b8", fontSize: "13px" }}>
-            No students enrolled
-          </div>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
-            <thead>
-              <tr style={{ background: "#f8fafc" }}>
-                {["#", "Name", "Email", "Birth Date"].map((h, i) => (
-                  <th key={i} style={{
-                    padding: "11px 16px", textAlign: "left",
-                    fontWeight: 600, color: "#475569",
-                    fontSize: "11px", letterSpacing: "0.5px", textTransform: "uppercase",
-                    borderBottom: "1px solid #e2e8f0",
-                  }}>{h}</th>
-                ))}
+      <div className="flex justify-between items-center mb-2 mt-6">
+        <h2 className="text-xl font-semibold">Student List</h2>
+        <a
+          href={`/student/my-classes/${classId}/documents`}
+          className="flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-lg font-medium transition-colors border border-blue-200"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Tài liệu & Bài tập
+        </a>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border border-gray-200 text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border px-4 py-3 text-left">Name</th>
+              <th className="border px-4 py-3 text-left">Email</th>
+              <th className="border px-4 py-3 text-left">Birth Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {students.map((student) => (
+              <tr key={student.id} className="hover:bg-gray-50">
+                <td className="border px-4 py-3 font-semibold text-blue-700">
+                  {student.name}
+                </td>
+                <td className="border px-4 py-3">{student.email}</td>
+                <td className="border px-4 py-3">{student.birthday}</td>
               </tr>
-            </thead>
-            <tbody>
-              {students.map((student, idx) => (
-                <tr
-                  key={student.id || idx}
-                  style={{ borderBottom: idx < students.length - 1 ? "1px solid #f1f5f9" : "none", transition: "background 0.15s" }}
-                  onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                >
-                  <td style={{ padding: "12px 16px", color: "#94a3b8", fontSize: "12px" }}>
-                    {idx + 1}
-                  </td>
-                  <td style={{ padding: "12px 16px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <div style={{
-                        width: "28px", height: "28px",
-                        background: "linear-gradient(135deg,#10b981,#34d399)",
-                        borderRadius: "50%",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        color: "#fff", fontWeight: 700, fontSize: "11px", flexShrink: 0,
-                      }}>
-                        {student.name?.charAt(0)?.toUpperCase() || "?"}
-                      </div>
-                      <span style={{ fontWeight: 600, color: "#0f172a" }}>{student.name}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: "12px 16px", color: "#475569" }}>{student.email}</td>
-                  <td style={{ padding: "12px 16px", color: "#64748b" }}>{student.birthday}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

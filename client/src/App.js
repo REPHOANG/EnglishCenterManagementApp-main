@@ -16,20 +16,26 @@ import StudentSchedule from "./pages/student/StudentSchedule";
 import RegisterClass from "./pages/student/RegisterClass";
 import MyClasses from "./pages/student/MyClasses";
 import ClassDetails from "./pages/student/ClassDetails";
+import ClassDocuments from "./pages/student/ClassDocuments";
 
 import StudentGrades from "./pages/student/Grades";
 import GradeDetails from "./pages/student/GradeDetails";
 import StudentDashboard from "./pages/student/StudentDashboard";
+import AttendanceHistory from "./pages/student/AttendanceHistory";
 
 // Admin
 import Dashboard from "./pages/admin/DashBoard";
 import CourseManagement from "./pages/admin/CourseManagement";
 import ClassesManagement from "./pages/admin/ClassesManagement";
+import ClassForm from "./pages/admin/ClassForm";
+import RoomManagement from "./pages/admin/RoomManagement";
+import GradesOverview from "./pages/admin/GradesOverview";
 import UserManagement from "./pages/admin/UserManagement";
 import LoginPage from "./Login/Login";
 import ForgotPassword from "./Login/ForgotPassword";
 import ResetPassword from "./Login/ResetPassword";
 import ProtectedRoute from "./Login/ProtectedRoute";
+
 function App() {
   return (
     <Router>
@@ -78,6 +84,38 @@ function App() {
           }
         />
         <Route
+          path="/admin/classes/add"
+          element={
+            <ProtectedRoute>
+              <ClassForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/classes/edit/:id"
+          element={
+            <ProtectedRoute>
+              <ClassForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/rooms"
+          element={
+            <ProtectedRoute>
+              <RoomManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/grades"
+          element={
+            <ProtectedRoute>
+              <GradesOverview />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/users"
           element={
             <ProtectedRoute>
@@ -92,9 +130,11 @@ function App() {
           <Route path="my-classes" element={<MyClasses />} />
           <Route path="register-class" element={<RegisterClass />} />
           <Route path="my-classes/:classId" element={<ClassDetails />} />
+          <Route path="my-classes/:classId/documents" element={<ClassDocuments />} />
 
           <Route path="grade" element={<StudentGrades />} />
           <Route path="grade/:classId" element={<GradeDetails />} />
+          <Route path="attendance" element={<AttendanceHistory />} />
         </Route>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />

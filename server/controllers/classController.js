@@ -50,12 +50,7 @@ const createClass = async (req, res) => {
       !courseId ||
       !startDate ||
       !endDate ||
-      !capacity ||
-      !Array.isArray(schedule) ||
-      schedule.length === 0 ||
-      !Array.isArray(teachers) ||
-      teachers.length === 0 ||
-      !Array.isArray(students)
+      !capacity
     ) {
       return res.status(400).json({
         success: false,
@@ -63,8 +58,27 @@ const createClass = async (req, res) => {
       });
     }
 
+    // Date validation
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (start < today) {
+      return res.status(400).json({
+        success: false,
+        message: "Start date cannot be in the past",
+      });
+    }
+    if (end < start) {
+      return res.status(400).json({
+        success: false,
+        message: "End date cannot be before start date",
+      });
+    }
+
     // Kiểm tra giới hạn học sinh
-    if (students.length > capacity) {
+    if (students && students.length > capacity) {
       return res.status(400).json({
         success: false,
         message: "Class is over capacity",
@@ -77,10 +91,10 @@ const createClass = async (req, res) => {
       startDate,
       endDate,
       capacity,
-      schedule,
+      schedule: schedule || [],
       status: status || "ongoing",
-      teachers,
-      students,
+      teachers: teachers || [],
+      students: students || [],
     });
 
     const savedClass = await newClass.save();
@@ -104,6 +118,49 @@ const createClass = async (req, res) => {
 const updateClass = async (req, res) => {
   try {
     const { id } = req.params;
+    const { startDate, endDate, capacity, students } = req.body;
+
+    // Date validation for update
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const today = new Date();
+      const formattedToday = today.toISOString().split('T')[0];
+      const formattedEnd = end.toISOString().split('T')[0];
+    today.setHours(0, 0, 0, 0);
+
+    if (start < today) {
+      return res.status(400).json({
+        success: false,
+        message: "Start date cannot be in the past",
+      });
+    }
+
+
+      if (end < start) {
+        return res.status(400).json({
+          success: false,
+          message: "End date cannot be before start date",
+        });
+      }
+
+      if(end <= Date.now()){
+        return res.status(400).json({
+          success: false,
+          message: `End date ${formattedEnd} cannot be in the past of today date: ${formattedToday}`,
+        });
+      }
+    }
+
+
+    if (capacity && students) {
+       if (students.length > capacity) {
+        return res.status(400).json({
+          success: false,
+          message: "Class is over capacity",
+        });
+      }
+    }
 
     const updated = await Class.findByIdAndUpdate(id, req.body, {
       new: true,
@@ -412,6 +469,35 @@ const unenrollFromClass = async (req, res) => {
   }
 };
 
+const getClassByIdAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const classData = await Class.findById(id)
+      .populate("courseId", "name")
+      .populate("teachers", "fullName")
+      .populate("students", "fullName")
+      .populate("schedule.slot", "from to")
+      .populate("schedule.room", "name");
+
+    if (!classData) {
+      return res.status(404).json({ success: false, message: "Class not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Class retrieved successfully",
+      data: classData,
+    });
+  } catch (error) {
+    console.error("Error fetching class for admin:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllClasses,
   createClass,
@@ -422,4 +508,5 @@ module.exports = {
   getRegisterableClasses,
   enrollInClass,
   unenrollFromClass,
+  getClassByIdAdmin,
 };
