@@ -36,7 +36,9 @@ export default function Sidebar() {
             borderRadius: "8px",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: "16px",
-          }}>🎓</div>
+          }}>
+            <GraduationCap size={18} color="#fff" />
+          </div>
           <span style={{ color: "#fff", fontWeight: 700, fontSize: "16px", letterSpacing: "0.3px" }}>
             EduCenter
           </span>

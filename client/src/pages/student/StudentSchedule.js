@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, BookOpen, MapPin } from "lucide-react";
 
 const slotStartTimes = [
   "08:00", "09:40", "13:00", "14:40", "18:00", "19:40",
@@ -292,13 +292,13 @@ export default function StudentSchedule() {
                               {item.class?.name}
                             </div>
                             {item.class?.course && (
-                              <div style={{ fontSize: "10px", color: color.label, marginBottom: "2px" }}>
-                                📚 {item.class.course}
+                              <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: color.label, marginBottom: "2px" }}>
+                                <BookOpen size={10} /> {item.class.course}
                               </div>
                             )}
                             {item.room?.name && (
-                              <div style={{ fontSize: "10px", color: color.text, opacity: 0.7 }}>
-                                📍 {item.room.name}
+                              <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: color.text, opacity: 0.7 }}>
+                                <MapPin size={10} /> {item.room.name}
                               </div>
                             )}
                           </div>
