@@ -46,6 +46,34 @@ const RegisterClass = () => {
       (cls.courseName?.toLowerCase() || "").includes(search.toLowerCase())
   );
 
+  const handleEnroll = async (classId, className) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+        `http://localhost:9999/api/student/register-class/${classId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      setClasses((prev) =>
+        prev.map((cls) =>
+          cls._id === classId
+            ? { ...cls, registered: true, studentsCount: cls.studentsCount + 1 }
+            : cls
+        )
+      );
+      
+      alert(`Successfully enrolled in ${className}`);
+    } catch (err) {
+      console.error("Error enrolling:", err);
+      alert(err.response?.data?.message || "Failed to enroll in class");
+    }
+  };
+
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "300px", flexDirection: "column", gap: "16px" }}>
       <div style={{ width: "44px", height: "44px", border: "3px solid rgba(16,185,129,0.2)", borderTop: "3px solid #10b981", borderRadius: "50%", animation: "spin 0.9s linear infinite" }} />
@@ -227,7 +255,7 @@ const RegisterClass = () => {
                 ) : (
                   <button
                     disabled={isFull}
-                    onClick={() => alert(`Enrolled in ${cls.name}`)}
+                    onClick={() => handleEnroll(cls._id, cls.name)}
                     style={{
                       width: "100%", padding: "9px",
                       background: isFull
