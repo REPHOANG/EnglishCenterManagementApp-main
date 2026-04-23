@@ -336,7 +336,7 @@ const getRegisterableClasses = async (req, res) => {
 const enrollInClass = async (req, res) => {
   try {
     const mongoUserId = req.user?.id; // JWT user _id
-    const classId = req.params.id;
+    const classId = req.params.classid || req.params.id;
 
     if (
       !mongoose.Types.ObjectId.isValid(mongoUserId) ||
