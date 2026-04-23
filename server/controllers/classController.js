@@ -50,12 +50,7 @@ const createClass = async (req, res) => {
       !courseId ||
       !startDate ||
       !endDate ||
-      !capacity ||
-      !Array.isArray(schedule) ||
-      schedule.length === 0 ||
-      !Array.isArray(teachers) ||
-      teachers.length === 0 ||
-      !Array.isArray(students)
+      !capacity
     ) {
       return res.status(400).json({
         success: false,
@@ -83,7 +78,7 @@ const createClass = async (req, res) => {
     }
 
     // Kiểm tra giới hạn học sinh
-    if (students.length > capacity) {
+    if (students && students.length > capacity) {
       return res.status(400).json({
         success: false,
         message: "Class is over capacity",
@@ -96,10 +91,10 @@ const createClass = async (req, res) => {
       startDate,
       endDate,
       capacity,
-      schedule,
+      schedule: schedule || [],
       status: status || "ongoing",
-      teachers,
-      students,
+      teachers: teachers || [],
+      students: students || [],
     });
 
     const savedClass = await newClass.save();

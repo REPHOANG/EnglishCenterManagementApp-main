@@ -41,19 +41,19 @@ const getTeachingSchedule = async (req, res) => {
     ).map(item => ({
       id: item._id,
       slot: {
-        id: item.slotId._id,
-        from: item.slotId.from,
-        to: item.slotId.to
+        id: item.slotId?._id,
+        from: item.slotId?.from,
+        to: item.slotId?.to
       },
       room: {
-        id: item.roomId._id,
-        name: item.roomId.name,
-        location: item.roomId.location
+        id: item.roomId?._id,
+        name: item.roomId?.name,
+        location: item.roomId?.location
       },
       class: {
-        id: item.classId._id,
-        name: item.classId.name,
-        course: item.classId.courseId.name
+        id: item.classId?._id,
+        name: item.classId?.name,
+        course: item.classId?.courseId?.name
       },
       // Format date as YYYY-MM-DD
       date: item.date.toISOString().split('T')[0]

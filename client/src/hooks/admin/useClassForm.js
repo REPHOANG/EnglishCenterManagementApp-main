@@ -113,10 +113,7 @@ export function useClassForm(id) {
       }
     }
 
-    if (form.teachers.length === 0) e.teachers = "At least 1 teacher required";
-    if (form.students.length === 0) {
-      e.students = "At least 1 student required";
-    } else if (form.capacity && form.students.length > +form.capacity) {
+    if (form.capacity && form.students.length > +form.capacity) {
       e.students = "Class is full or exceeds capacity";
     }
 
