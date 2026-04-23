@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Menu, Bell, LogOut, User, ChevronDown } from "lucide-react";
+import { Menu, Bell, LogOut, User, ChevronDown, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
@@ -78,8 +78,12 @@ export default function Navbar({ onToggleSidebar }) {
               padding: "2px 8px",
               borderRadius: "20px",
               letterSpacing: "0.5px",
+              display: "flex",
+              alignItems: "center",
+              gap: "3px",
             }}
           >
+            <Shield size={9} />
             ADMIN
           </span>
         </div>
@@ -99,14 +103,23 @@ export default function Navbar({ onToggleSidebar }) {
             display: "flex",
             alignItems: "center",
             position: "relative",
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+            e.currentTarget.style.color = "#fff";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+            e.currentTarget.style.color = "rgba(255,255,255,0.6)";
           }}
         >
           <Bell size={17} />
           <span
             style={{
               position: "absolute",
-              top: "4px",
-              right: "4px",
+              top: "5px",
+              right: "5px",
               width: "7px",
               height: "7px",
               background: "#f59e0b",
@@ -124,8 +137,12 @@ export default function Navbar({ onToggleSidebar }) {
               display: "flex",
               alignItems: "center",
               gap: "8px",
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              background: showDropdown
+                ? "rgba(99,102,241,0.2)"
+                : "rgba(255,255,255,0.06)",
+              border: showDropdown
+                ? "1px solid rgba(99,102,241,0.4)"
+                : "1px solid rgba(255,255,255,0.1)",
               borderRadius: "10px",
               padding: "5px 12px 5px 6px",
               cursor: "pointer",
@@ -145,6 +162,7 @@ export default function Navbar({ onToggleSidebar }) {
                 fontSize: "13px",
                 fontWeight: 700,
                 color: "#fff",
+                boxShadow: "0 0 0 2px rgba(99,102,241,0.3)",
               }}
             >
               {initial}
@@ -152,88 +170,110 @@ export default function Navbar({ onToggleSidebar }) {
             <span style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.85)" }}>
               {userName}
             </span>
-            <ChevronDown size={14} style={{ color: "rgba(255,255,255,0.4)", marginLeft: "2px" }} />
+            <ChevronDown
+              size={14}
+              style={{
+                color: "rgba(255,255,255,0.4)",
+                marginLeft: "2px",
+                transform: showDropdown ? "rotate(180deg)" : "rotate(0)",
+                transition: "transform 0.2s",
+              }}
+            />
           </button>
 
           {showDropdown && (
-            <div
-              style={{
-                position: "absolute",
-                top: "44px",
-                right: 0,
-                background: "#0c2040",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "12px",
-                minWidth: "180px",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-                overflow: "hidden",
-                zIndex: 999,
-              }}
-            >
+            <>
+              {/* Overlay to close dropdown */}
+              <div
+                style={{ position: "fixed", inset: 0, zIndex: 998 }}
+                onClick={() => setShowDropdown(false)}
+              />
               <div
                 style={{
-                  padding: "12px 16px",
-                  borderBottom: "1px solid rgba(255,255,255,0.07)",
+                  position: "absolute",
+                  top: "48px",
+                  right: 0,
+                  background: "#0c2040",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: "12px",
+                  minWidth: "190px",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+                  overflow: "hidden",
+                  zIndex: 999,
                 }}
               >
-                <div style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{userName}</div>
-                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px" }}>Administrator</div>
-              </div>
-              <div style={{ padding: "6px" }}>
-                <button
-                  onClick={() => setShowDropdown(false)}
+                <div
                   style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    background: "transparent",
-                    border: "none",
-                    color: "rgba(255,255,255,0.7)",
-                    fontSize: "13px",
-                    cursor: "pointer",
-                    transition: "all 0.15s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.07)";
-                    e.currentTarget.style.color = "#fff";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.color = "rgba(255,255,255,0.7)";
+                    padding: "12px 16px",
+                    borderBottom: "1px solid rgba(255,255,255,0.07)",
+                    background: "rgba(99,102,241,0.08)",
                   }}
                 >
-                  <User size={14} /> Profile
-                </button>
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    background: "transparent",
-                    border: "none",
-                    color: "#f87171",
-                    fontSize: "13px",
-                    cursor: "pointer",
-                    transition: "all 0.15s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(248,113,113,0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
-                  }}
-                >
-                  <LogOut size={14} /> Logout
-                </button>
+                  <div style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{userName}</div>
+                  <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px", marginTop: "2px" }}>
+                    Administrator
+                  </div>
+                </div>
+                <div style={{ padding: "6px" }}>
+                  <button
+                    onClick={() => setShowDropdown(false)}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      background: "transparent",
+                      border: "none",
+                      color: "rgba(255,255,255,0.7)",
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                      textAlign: "left",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(255,255,255,0.07)";
+                      e.currentTarget.style.color = "#fff";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.color = "rgba(255,255,255,0.7)";
+                    }}
+                  >
+                    <User size={14} />
+                    Profile
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      background: "transparent",
+                      border: "none",
+                      color: "#f87171",
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                      textAlign: "left",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(248,113,113,0.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "transparent";
+                    }}
+                  >
+                    <LogOut size={14} />
+                    Logout
+                  </button>
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>
