@@ -55,7 +55,13 @@ const AssignmentSubmissionSection = ({ document }) => {
 
   if (loading) return <div className="text-xs text-gray-500 mt-4">Loading submission status...</div>;
 
-  const isLate = submission && document.deadline && new Date(submission.submittedAt) > new Date(document.deadline);
+  let isLate = false;
+  if (submission && document.deadline) {
+    const deadlineTime = new Date(document.deadline);
+    deadlineTime.setSeconds(59, 999);
+    isLate = new Date(submission.submittedAt) > deadlineTime;
+  }
+
 
   return (
     <div className="mt-4 pt-4 border-t border-gray-100 bg-gray-50 rounded-lg p-4">
@@ -228,7 +234,7 @@ const ClassDocuments = () => {
                   </span>
                   {doc.type === "assignment" && doc.deadline && (
                     <span className="text-xs font-semibold text-orange-600 flex items-center gap-1">
-                      <Calendar size={12} /> Deadline: {new Date(doc.deadline).toLocaleString("en-US")}
+                      <Calendar size={12} /> Deadline: {new Date(doc.deadline).toLocaleString("vi-VN")}
                     </span>
                   )}
                 </div>

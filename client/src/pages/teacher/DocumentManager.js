@@ -54,7 +54,12 @@ const AssignmentSubmissionsList = ({ documentId, deadline, onClose }) => {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {submissions.map(sub => {
-            const isLate = deadline && new Date(sub.submittedAt) > new Date(deadline);
+            let isLate = false;
+            if (deadline) {
+              const deadlineTime = new Date(deadline);
+              deadlineTime.setSeconds(59, 999);
+              isLate = new Date(sub.submittedAt) > deadlineTime;
+            }
             return (
               <div key={sub._id} style={{ background: "#fff", padding: "12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
