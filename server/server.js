@@ -18,8 +18,8 @@ const slotRoute = require("./routes/slotRoute");
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '50mb' }));
 
 app.use("/api/classes", classRoute);
 app.use("/api/users", userRoute);
@@ -37,6 +37,9 @@ app.use("/api/roles", roleRoute);
 app.use("/api/schedule", require("./routes/scheduleRoute"));
 app.use("/api/teacher", require("./routes/teacherRoute"));
 app.use("/api/student", studentRoute);
+app.use("/api/grades", require("./routes/gradeRoute"));
+app.use("/api/documents", require("./routes/documentRoute"));
+app.use("/api/submissions", require("./routes/submissionRoute"));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/", (req, res) => {

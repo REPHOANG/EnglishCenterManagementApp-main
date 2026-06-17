@@ -13,6 +13,7 @@ const {
   enrollInClass,
   unenrollFromClass,
 } = require("../controllers/classController");
+const { getStudentAttendance } = require("../controllers/teacherController");
 
 /**
  * @swagger
@@ -143,7 +144,7 @@ router.get("/:studentId/registerable-classes",  getRegisterableClasses);
  *       201:
  *         description: Enrolled in class
  */
-router.post("/register-class/:classid",  enrollInClass);
+router.post("/register-class/:classid", jwtAuth, enrollInClass);
 
 /**
  * @swagger
@@ -161,5 +162,9 @@ router.post("/register-class/:classid",  enrollInClass);
  *       200:
  *         description: Unenrolled from class
  */
-router.delete("/register-class/:classid",  unenrollFromClass);
+router.delete("/register-class/:classid", jwtAuth, unenrollFromClass);
+
+// ── Attendance ────────────────────────────────────────────────────────────
+router.get("/:studentId/attendance/class/:classId", getStudentAttendance);
+
 module.exports = router;

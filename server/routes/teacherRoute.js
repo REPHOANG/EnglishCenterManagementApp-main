@@ -10,7 +10,11 @@ const {
     getGradesOfAClass,
     getGradesOfAStudent,
     addGradeToAStudent,
-    updateGradesOfAStudent
+    updateGradesOfAStudent,
+    getClassSchedules,
+    getAttendanceBySchedule,
+    takeAttendance,
+    getAttendanceSummary,
 } = require("../controllers/teacherController");
 const authTeacher = require("../middlewares/authTeacher");
 
@@ -245,4 +249,18 @@ router.post("/:teacherId/classes/:classId/grades/student/:studentId", addGradeTo
 // Update grades for a specific student in a class
 router.patch("/grades/:gradeId", updateGradesOfAStudent);
 
-module.exports = router; 
+// ── Attendance routes ──────────────────────────────────────────────────────
+
+// Get list of schedule sessions for a class (attendance session picker)
+router.get("/:teacherId/classes/:classId/sessions", getClassSchedules);
+
+// Get attendance summary for the whole class (MUST be before :scheduleId route)
+router.get("/:teacherId/classes/:classId/attendance/summary", getAttendanceSummary);
+
+// Get attendance for a specific session
+router.get("/:teacherId/classes/:classId/attendance/:scheduleId", getAttendanceBySchedule);
+
+// Save (upsert) attendance for a session
+router.post("/:teacherId/classes/:classId/attendance/:scheduleId", takeAttendance);
+
+module.exports = router;

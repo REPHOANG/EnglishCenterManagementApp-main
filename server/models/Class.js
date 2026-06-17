@@ -53,14 +53,12 @@ const classSchema = new Schema(
       {
         type: Types.ObjectId,
         ref: "User",
-        required: true,
       },
     ],
     students: [
       {
         type: Types.ObjectId,
         ref: "User",
-        required: true,
       },
     ],
   },

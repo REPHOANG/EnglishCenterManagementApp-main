@@ -50,12 +50,7 @@ const createClass = async (req, res) => {
       !courseId ||
       !startDate ||
       !endDate ||
-      !capacity ||
-      !Array.isArray(schedule) ||
-      schedule.length === 0 ||
-      !Array.isArray(teachers) ||
-      teachers.length === 0 ||
-      !Array.isArray(students)
+      !capacity
     ) {
       return res.status(400).json({
         success: false,
@@ -63,8 +58,27 @@ const createClass = async (req, res) => {
       });
     }
 
+    // Date validation
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (start < today) {
+      return res.status(400).json({
+        success: false,
+        message: "Start date cannot be in the past",
+      });
+    }
+    if (end < start) {
+      return res.status(400).json({
+        success: false,
+        message: "End date cannot be before start date",
+      });
+    }
+
     // Kiểm tra giới hạn học sinh
-    if (students.length > capacity) {
+    if (students && students.length > capacity) {
       return res.status(400).json({
         success: false,
         message: "Class is over capacity",
@@ -77,10 +91,10 @@ const createClass = async (req, res) => {
       startDate,
       endDate,
       capacity,
-      schedule,
+      schedule: schedule || [],
       status: status || "ongoing",
-      teachers,
-      students,
+      teachers: teachers || [],
+      students: students || [],
     });
 
     const savedClass = await newClass.save();
@@ -104,6 +118,49 @@ const createClass = async (req, res) => {
 const updateClass = async (req, res) => {
   try {
     const { id } = req.params;
+    const { startDate, endDate, capacity, students } = req.body;
+
+    // Date validation for update
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const today = new Date();
+      const formattedToday = today.toISOString().split('T')[0];
+      const formattedEnd = end.toISOString().split('T')[0];
+    today.setHours(0, 0, 0, 0);
+
+    if (start < today) {
+      return res.status(400).json({
+        success: false,
+        message: "Start date cannot be in the past",
+      });
+    }
+
+
+      if (end < start) {
+        return res.status(400).json({
+          success: false,
+          message: "End date cannot be before start date",
+        });
+      }
+
+      if(end <= Date.now()){
+        return res.status(400).json({
+          success: false,
+          message: `End date ${formattedEnd} cannot be in the past of today date: ${formattedToday}`,
+        });
+      }
+    }
+
+
+    if (capacity && students) {
+       if (students.length > capacity) {
+        return res.status(400).json({
+          success: false,
+          message: "Class is over capacity",
+        });
+      }
+    }
 
     const updated = await Class.findByIdAndUpdate(id, req.body, {
       new: true,
@@ -159,22 +216,48 @@ const getAllClassesByUserId = async (req, res) => {
     const { studentId } = req.params;
 
     const classes = await Class.find()
-      .populate("courseId", "name")
+      .populate("courseId", "name image")
       .populate("teachers", "fullName")
       .populate("schedule.slot", "from to")
       .lean();
 
+    // Aggregate sessions for all classes
+    const allSessions = await Schedule.find({ classId: { $in: classes.map(c => c._id) } })
+      .populate("slotId", "from to")
+      .lean();
+
     const formattedClasses = classes
-      .filter((cls) => cls.students.some((s) => s.toString() === studentId))
-      .map((cls) => ({
-        _id: cls._id,
-        name: cls.name,
-        courseName: cls.courseId?.name || "N/A",
-        teachers: cls.teachers || [],
-        capacity: cls.capacity,
-        status: cls.status || "ongoing",
-        schedule: cls.schedule || [],
-      }));
+      .filter((cls) => (cls.students || []).some((s) => s.toString() === studentId))
+      .map((cls) => {
+        let displaySchedule = (cls.schedule || []).map((s) => ({
+          weekday: s.weekday,
+          slot: s.slot // keep for compatibility if needed
+        })).filter(s => s.slot && s.slot.from);
+
+        if (displaySchedule.length === 0) {
+          const sessions = allSessions.filter(s => s.classId?.toString() === cls._id.toString());
+          const summary = {};
+          sessions.forEach(s => {
+            if (s.slotId && s.date) {
+              const day = new Date(s.date).toLocaleDateString('en-US', { weekday: 'long' });
+              const key = `${day}-${s.slotId.from}-${s.slotId.to}`;
+              summary[key] = { weekday: day, slot: s.slotId };
+            }
+          });
+          displaySchedule = Object.values(summary);
+        }
+
+        return {
+          _id: cls._id,
+          name: cls.name,
+          courseName: cls.courseId?.name || "N/A",
+          courseImage: cls.courseId?.image,
+          teachers: cls.teachers || [],
+          capacity: cls.capacity,
+          status: cls.status || "ongoing",
+          schedule: displaySchedule,
+        };
+      });
 
     res.status(200).json({
       success: true,
@@ -208,11 +291,24 @@ const getClassesByUserId = async (req, res) => {
       return res.status(404).json({ message: "Class not found" });
     }
 
-    const scheduleFormatted = classData.schedule.map((item) => ({
+    let scheduleFormatted = (classData.schedule || []).map((item) => ({
       weekday: item.weekday,
       from: item.slot?.from || "N/A",
       to: item.slot?.to || "N/A",
-    }));
+    })).filter(s => s.from !== "N/A");
+
+    if (scheduleFormatted.length === 0) {
+      const sessions = await Schedule.find({ classId }).populate("slotId", "from to").lean();
+      const summary = {};
+      sessions.forEach(s => {
+        if (s.slotId && s.date) {
+          const day = new Date(s.date).toLocaleDateString('en-US', { weekday: 'long' });
+          const key = `${day}-${s.slotId.from}-${s.slotId.to}`;
+          summary[key] = { weekday: day, from: s.slotId.from, to: s.slotId.to };
+        }
+      });
+      scheduleFormatted = Object.values(summary);
+    }
 
     res.json({
       _id: classData._id,
@@ -226,7 +322,7 @@ const getClassesByUserId = async (req, res) => {
         id: s._id,
         name: s.fullName,
         email: s.email,
-        birthday: s.birthday ? s.birthday.toISOString().split("T")[0] : "N/A",
+        birthday: s.birthday ? new Date(s.birthday).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }) : "N/A",
       })),
     });
   } catch (error) {
@@ -240,30 +336,48 @@ const getRegisterableClasses = async (req, res) => {
     const { studentId } = req.params;
     //find all classes
     const classes = await Class.find()
-      .populate("courseId", "name")
+      .populate("courseId", "name image")
       .populate("teachers", "fullName")
-      .populate({
-        path: "schedule.slot",
-        model: "Slot",
-        select: "from to",
-      })
+      .populate("schedule.slot", "from to")
       .lean();
 
-    const registerableClasses = classes.map((cls) => ({
-      _id: cls._id,
-      name: cls.name,
-      courseName: cls.courseId?.name || "N/A",
-      teachers: cls.teachers.map((t) => t.fullName).join(", ") || "N/A",
-      capacity: cls.capacity,
-      schedule: cls.schedule.map((s) => ({
+    const allSessions = await Schedule.find({ classId: { $in: classes.map(c => c._id) } })
+      .populate("slotId", "from to")
+      .lean();
+
+    const registerableClasses = classes.map((cls) => {
+      let displaySchedule = (cls.schedule || []).map((s) => ({
         weekday: s.weekday,
         from: s.slot?.from || "N/A",
         to: s.slot?.to || "N/A",
-      })),
-      studentsCount: cls.students.length,
-      status: cls.status,
-      registered: cls.students.toString().includes(studentId),
-    }));
+      })).filter(s => s.from !== "N/A");
+
+      if (displaySchedule.length === 0) {
+        const sessions = allSessions.filter(s => s.classId?.toString() === cls._id.toString());
+        const summary = {};
+        sessions.forEach(s => {
+          if (s.slotId && s.date) {
+            const day = new Date(s.date).toLocaleDateString('en-US', { weekday: 'long' });
+            const key = `${day}-${s.slotId.from}-${s.slotId.to}`;
+            summary[key] = { weekday: day, from: s.slotId.from, to: s.slotId.to };
+          }
+        });
+        displaySchedule = Object.values(summary);
+      }
+
+      return {
+        _id: cls._id,
+        name: cls.name,
+        courseName: cls.courseId?.name || "N/A",
+        courseImage: cls.courseId?.image,
+        teachers: cls.teachers.map((t) => t.fullName).join(", ") || "N/A",
+        capacity: cls.capacity,
+        schedule: displaySchedule,
+        studentsCount: (cls.students || []).length,
+        status: cls.status,
+        registered: (cls.students || []).toString().includes(studentId),
+      };
+    });
 
     res.status(200).json(registerableClasses);
   } catch (error) {
@@ -279,7 +393,7 @@ const getRegisterableClasses = async (req, res) => {
 const enrollInClass = async (req, res) => {
   try {
     const mongoUserId = req.user?.id; // JWT user _id
-    const classId = req.params.id;
+    const classId = req.params.classid || req.params.id;
 
     if (
       !mongoose.Types.ObjectId.isValid(mongoUserId) ||
@@ -412,6 +526,35 @@ const unenrollFromClass = async (req, res) => {
   }
 };
 
+const getClassByIdAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const classData = await Class.findById(id)
+      .populate("courseId", "name")
+      .populate("teachers", "fullName")
+      .populate("students", "fullName")
+      .populate("schedule.slot", "from to")
+      .populate("schedule.room", "name");
+
+    if (!classData) {
+      return res.status(404).json({ success: false, message: "Class not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Class retrieved successfully",
+      data: classData,
+    });
+  } catch (error) {
+    console.error("Error fetching class for admin:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllClasses,
   createClass,
@@ -422,4 +565,5 @@ module.exports = {
   getRegisterableClasses,
   enrollInClass,
   unenrollFromClass,
+  getClassByIdAdmin,
 };

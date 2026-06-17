@@ -6,19 +6,63 @@ const mongoose = require("mongoose");
 
 const getAllGrades = async (req, res) => {
   try {
-    const grades = await Grades.find();
+    const grades = await Grades.find()
+      .populate("studentId", "fullName email")
+      .populate("classId", "name")
+      .populate({
+        path: "classId",
+        populate: {
+          path: "courseId",
+          select: "name",
+        },
+      });
     res.status(200).json({
       success: true,
       message: "Grades retrieved successfully",
       data: grades,
     });
   } catch (error) {
-    console.error("Error getting all courses:", error);
+    console.error("Error getting all grades:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",
       error: error.message,
     });
+  }
+};
+
+const getAdminGradesOverview = async (req, res) => {
+  try {
+    const grades = await Grades.find()
+      .populate("studentId", "fullName email")
+      .populate({
+        path: "classId",
+        select: "name courseId",
+        populate: {
+          path: "courseId",
+          select: "name",
+        },
+      })
+      .lean();
+
+    // Format data for frontend table
+    const formatted = grades.map(g => ({
+      _id: g._id,
+      studentName: g.studentId?.fullName || "Unknown",
+      studentEmail: g.studentId?.email || "N/A",
+      className: g.classId?.name || "Unknown",
+      courseName: g.classId?.courseId?.name || "N/A",
+      score: g.score || { listening: 0, reading: 0, writing: 0, speaking: 0 },
+      comment: g.comment || "",
+      updatedAt: g.updatedAt
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: formatted
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -131,19 +175,25 @@ const getAllGradesOfAStudentInAllClasses = async (req, res) => {
       })
       .lean();
 
-    if (!grades || grades.length === 0) {
-      return res.status(404).json({
-        success: false,
+    // Lọc bỏ những grade  (class đã bị xóa)
+    const validGrades = grades.filter(
+      (grade) => grade.classId && grade.classId.courseId
+    );
+
+    if (!validGrades || validGrades.length === 0) {
+      return res.status(200).json({
+        success: true,
         message: "No grades found for this student",
+        data: [],
       });
     }
 
-    const formattedGrades = grades.map((grade) => ({
+    const formattedGrades = validGrades.map((grade) => ({
       classId: grade.classId._id,
       className: grade.classId.name,
-      courseName: grade.classId.courseId.name
-      
+      courseName: grade.classId.courseId.name,
     }));
+
     res.status(200).json({
       success: true,
       message: "Grades for the student retrieved successfully",
@@ -175,17 +225,22 @@ const getGradesOfAStudent = async (req, res) => {
         },
       })
       .lean();
-    if (!grades || grades.length === 0) {
-      return res.status(404).json({
-        success: false,
+    const validGrades = grades.filter(
+      (grade) => grade.classId && grade.classId.courseId
+    );
+
+    if (!validGrades || validGrades.length === 0) {
+      return res.status(200).json({
+        success: true,
         message: "No grades found for this student in the specified class",
+        data: [],
       });
     }
 
     res.status(200).json({
       success: true,
       message: "Grades for the student retrieved successfully",
-      data: grades,
+      data: validGrades,
     });
   } catch (error) {
     console.error("Error fetching grades for student:", error);
@@ -285,4 +340,5 @@ module.exports = {
   getGradesOfAStudent,
   getGradesByClassId,
   getAllGradesOfAStudentInAllClasses,
+  getAdminGradesOverview,
 };

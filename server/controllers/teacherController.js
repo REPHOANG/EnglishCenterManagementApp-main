@@ -5,6 +5,7 @@ const Room = require('../models/Room');
 const User = require('../models/User');
 const Course = require('../models/Course');
 const Grade = require('../models/Grade');
+const Attendance = require('../models/Attendance');
 
 // Get teaching schedule for a specific teacher
 const getTeachingSchedule = async (req, res) => {
@@ -40,22 +41,22 @@ const getTeachingSchedule = async (req, res) => {
     ).map(item => ({
       id: item._id,
       slot: {
-        id: item.slotId._id,
-        from: item.slotId.from,
-        to: item.slotId.to
+        id: item.slotId?._id,
+        from: item.slotId?.from,
+        to: item.slotId?.to
       },
       room: {
-        id: item.roomId._id,
-        name: item.roomId.name,
-        location: item.roomId.location
+        id: item.roomId?._id,
+        name: item.roomId?.name,
+        location: item.roomId?.location
       },
       class: {
-        id: item.classId._id,
-        name: item.classId.name,
-        course: item.classId.courseId.name
+        id: item.classId?._id,
+        name: item.classId?.name,
+        course: item.classId?.courseId?.name
       },
-      // Format date as YYYY-MM-DD
-      date: item.date.toISOString().split('T')[0]
+      // Format date as YYYY-MM-DD in Vietnam timezone
+      date: new Date(item.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })
     }));
 
     res.status(200).json({
@@ -115,8 +116,8 @@ const getTeachingClasses = async (req, res) => {
       id: c._id,
       name: c.name,
       course: c.courseId.name,
-      startDate: c.startDate.toISOString().split('T')[0],
-      endDate: c.endDate.toISOString().split('T')[0],
+      startDate: new Date(c.startDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
+      endDate: new Date(c.endDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
       capacity: c.capacity,
       status: c.status
     }));
@@ -140,7 +141,7 @@ const getTeachingClassDetails = async (req, res) => {
   try {
     const { classId } = req.params;
     const classDetails = await Class.findById(classId)
-      .populate('courseId', 'name')
+      .populate('courseId', 'name image')
       .populate('teachers', 'fullName email')
       .populate('students', 'fullName email number birthday');
 
@@ -155,8 +156,9 @@ const getTeachingClassDetails = async (req, res) => {
       id: classDetails._id,
       name: classDetails.name,
       course: classDetails.courseId.name,
-      startDate: classDetails.startDate.toISOString().split('T')[0],
-      endDate: classDetails.endDate.toISOString().split('T')[0],
+      courseImage: classDetails.courseId.image,
+      startDate: new Date(classDetails.startDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
+      endDate: new Date(classDetails.endDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
       capacity: classDetails.capacity,
       status: classDetails.status,
       teachers: classDetails.teachers.map(t => ({
@@ -169,7 +171,7 @@ const getTeachingClassDetails = async (req, res) => {
         name: s.fullName,
         email: s.email,
         number: s.number,
-        birthday: s.birthday.toISOString().split('T')[0]
+        birthday: s.birthday ? new Date(s.birthday).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }) : null
       }))
     };
 
@@ -419,6 +421,192 @@ const getCourseDetails = async (req, res) => {
 
 
 
+// ==================== ATTENDANCE ====================
+
+// GET /:teacherId/classes/:classId/sessions
+const getClassSchedules = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const schedules = await Schedule.find({ classId })
+      .populate('slotId', 'from to')
+      .populate('roomId', 'name location')
+      .sort({ date: 1 });
+
+    if (!schedules || schedules.length === 0) {
+      return res.status(404).json({ success: false, message: 'No schedules found for this class' });
+    }
+
+    const formatted = schedules.map((s) => ({
+      id: s._id,
+      date: new Date(s.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
+      slot: s.slotId ? { id: s.slotId._id, from: s.slotId.from, to: s.slotId.to } : null,
+      room: s.roomId ? { id: s.roomId._id, name: s.roomId.name, location: s.roomId.location } : null,
+    }));
+
+    res.status(200).json({ success: true, data: formatted });
+  } catch (error) {
+    console.error('Error getting class schedules:', error);
+    res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+  }
+};
+
+// GET /:teacherId/classes/:classId/attendance/:scheduleId
+const getAttendanceBySchedule = async (req, res) => {
+  try {
+    const { classId, scheduleId } = req.params;
+    const classData = await Class.findById(classId).populate('students', 'fullName email');
+    if (!classData) return res.status(404).json({ success: false, message: 'Class not found' });
+
+    const attendance = await Attendance.findOne({ classId, scheduleId });
+    const recordMap = new Map();
+    if (attendance) {
+      attendance.records.forEach((r) => {
+        recordMap.set(r.studentId.toString(), { status: r.status, note: r.note });
+      });
+    }
+
+    const records = classData.students.map((s) => {
+      const existing = recordMap.get(s._id.toString());
+      return {
+        studentId: s._id,
+        studentName: s.fullName,
+        email: s.email,
+        status: existing ? existing.status : 'not_yet',
+        note: existing ? existing.note : '',
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: { attendanceId: attendance ? attendance._id : null, classId, scheduleId, takenAt: attendance ? attendance.updatedAt : null, records },
+    });
+  } catch (error) {
+    console.error('Error getting attendance:', error);
+    res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+  }
+};
+
+// POST /:teacherId/classes/:classId/attendance/:scheduleId (upsert - cho phép sửa)
+const takeAttendance = async (req, res) => {
+  try {
+    const { classId, scheduleId } = req.params;
+    const { records, date } = req.body;
+    const takenBy = req.user?.id;
+
+    if (!Array.isArray(records) || records.length === 0) {
+      return res.status(400).json({ success: false, message: 'records array is required' });
+    }
+
+    const validStatuses = ['present', 'absent', 'late', 'not_yet'];
+    for (const r of records) {
+      if (!r.studentId || !validStatuses.includes(r.status)) {
+        return res.status(400).json({ success: false, message: 'Invalid record: studentId and status (present|absent|late|not_yet) are required' });
+      }
+    }
+
+    const schedule = await Schedule.findById(scheduleId);
+    if (!schedule) return res.status(404).json({ success: false, message: 'Schedule not found' });
+
+    const attendance = await Attendance.findOneAndUpdate(
+      { classId, scheduleId },
+      {
+        classId, scheduleId,
+        date: date || schedule.date,
+        takenBy,
+        records: records.map((r) => ({ studentId: r.studentId, status: r.status, note: r.note || '' })),
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(200).json({ success: true, message: 'Attendance saved successfully', data: attendance });
+  } catch (error) {
+    console.error('Error saving attendance:', error);
+    res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+  }
+};
+
+// GET /:teacherId/classes/:classId/attendance/summary
+const getAttendanceSummary = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const classData = await Class.findById(classId).populate('students', 'fullName email');
+    if (!classData) return res.status(404).json({ success: false, message: 'Class not found' });
+
+    const allAttendances = await Attendance.find({ classId });
+    const totalSessions = allAttendances.length;
+
+    const summary = classData.students.map((student) => {
+      const sid = student._id.toString();
+      let present = 0, absent = 0, late = 0;
+      allAttendances.forEach((att) => {
+        const record = att.records.find((r) => r.studentId.toString() === sid);
+        if (record) {
+          if (record.status === 'present') present++;
+          else if (record.status === 'absent') absent++;
+          else if (record.status === 'late') late++;
+        }
+      });
+      return {
+        studentId: student._id,
+        studentName: student.fullName,
+        email: student.email,
+        totalSessions, present, absent, late,
+        attendanceRate: totalSessions > 0 ? ((present + late) / totalSessions * 100).toFixed(1) : '0.0',
+      };
+    });
+
+    res.status(200).json({ success: true, data: summary });
+  } catch (error) {
+    console.error('Error getting attendance summary:', error);
+    res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+  }
+};
+
+// GET /api/student/:studentId/attendance/class/:classId
+const getStudentAttendance = async (req, res) => {
+  try {
+    const { studentId, classId } = req.params;
+    const classData = await Class.findById(classId).populate('courseId', 'name');
+    if (!classData) return res.status(404).json({ success: false, message: 'Class not found' });
+
+    const isEnrolled = classData.students.some((s) => s.toString() === studentId);
+    if (!isEnrolled) return res.status(403).json({ success: false, message: 'You are not enrolled in this class' });
+
+    const allAttendances = await Attendance.find({ classId }).sort({ date: 1 });
+    let present = 0, absent = 0, late = 0;
+
+    const records = allAttendances.map((att) => {
+      const record = att.records.find((r) => r.studentId.toString() === studentId);
+      const status = record ? record.status : 'absent';
+      const note = record ? record.note : '';
+      if (status === 'present') present++;
+      else if (status === 'absent') absent++;
+      else if (status === 'late') late++;
+      return {
+        attendanceId: att._id,
+        scheduleId: att.scheduleId,
+        date: att.date ? new Date(att.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }) : null,
+        status,
+        note,
+      };
+    });
+
+    const totalSessions = records.length;
+    res.status(200).json({
+      success: true,
+      data: {
+        classId, className: classData.name, courseName: classData.courseId?.name || 'N/A',
+        totalSessions, present, absent, late,
+        attendanceRate: totalSessions > 0 ? ((present + late) / totalSessions * 100).toFixed(1) : '0.0',
+        records,
+      },
+    });
+  } catch (error) {
+    console.error('Error getting student attendance:', error);
+    res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+  }
+};
+
 module.exports = {
   getTeachingSchedule,
   getTeachingSlots,
@@ -430,4 +618,10 @@ module.exports = {
   getGradesOfAStudent,
   addGradeToAStudent,
   updateGradesOfAStudent,
+  // Attendance
+  getClassSchedules,
+  getAttendanceBySchedule,
+  takeAttendance,
+  getAttendanceSummary,
+  getStudentAttendance,
 };

@@ -6,7 +6,28 @@ const {
   createClass,
   updateClass,
   deleteClass,
+  getClassByIdAdmin,
 } = require("../controllers/classController");
+
+/**
+ * @swagger
+ * /classes/{id}/admin:
+ *   get:
+ *     summary: Get a class by ID for admin
+ *     tags: [Classes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Class retrieved
+ *       404:
+ *         description: Class not found
+ */
+classRouter.get("/:id/admin", getClassByIdAdmin);
 
 /**
  * @swagger

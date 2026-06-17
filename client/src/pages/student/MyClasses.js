@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { jwtDecode } from "jwt-decode"; // Ensure you have this package installed
+import { jwtDecode } from "jwt-decode";
+import { BookOpen, Eye, CheckCircle, Clock, Filter } from "lucide-react";
 
 const MyClasses = () => {
   const [classes, setClasses] = useState([]);
@@ -13,189 +14,251 @@ const MyClasses = () => {
     const fetchClasses = async () => {
       setLoading(true);
       setError(null);
-
       const token = localStorage.getItem("token");
       if (!token) {
         setError("No token found. Please log in again to view your classes.");
         setLoading(false);
         return;
       }
-
       try {
-        const token = localStorage.getItem("token");
-        const studentId = jwtDecode(token).id; // Decode token to get student ID
+        const studentId = jwtDecode(token).id;
         const response = await axios.get(
           `http://localhost:9999/api/student/${studentId}/my-classes`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-
-        console.log("MyClasses API Response:", response.data);
         if (response.data && Array.isArray(response.data.data)) {
           setClasses(response.data.data);
         } else {
-          console.warn(
-            "API response.data.data is not an array or is missing 'data' property:",
-            response.data
-          );
           setError("Invalid classes data format received from server.");
           setClasses([]);
         }
       } catch (err) {
-        console.error(
-          "Error fetching classes:",
-          err.response?.status,
-          err.response?.data
-        );
-        setError(
-          `Failed to fetch classes. Status: ${
-            err.response?.status || "Unknown"
-          }, Message: ${err.response?.data?.message || err.message}`
-        );
+        setError(`Failed to fetch classes. Status: ${err.response?.status || "Unknown"}, Message: ${err.response?.data?.message || err.message}`);
         setClasses([]);
       } finally {
         setLoading(false);
       }
     };
-
     fetchClasses();
   }, []);
 
   const mapStatusForFilter = (status) => {
-    if (!status) {
-      return "ongoing"; // Default status if undefined
-    }
-    if (status.toLowerCase() === "finished") {
-      return "completed";
-    }
+    if (!status) return "ongoing";
+    if (status.toLowerCase() === "finished") return "completed";
     return status.toLowerCase();
   };
 
   const filteredClasses = classes.filter((cls) => {
-    if (filter === "All") {
-      return true;
-    }
+    if (filter === "All") return true;
     return mapStatusForFilter(cls.status) === filter.toLowerCase();
   });
 
+  const filterButtons = ["All", "Ongoing", "Completed"];
+
   if (loading) {
     return (
-      <div className="text-gray-500 text-center py-10">Loading classes...</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "300px", flexDirection: "column", gap: "16px" }}>
+        <div style={{
+          width: "44px", height: "44px", border: "3px solid rgba(16,185,129,0.2)",
+          borderTop: "3px solid #10b981", borderRadius: "50%",
+          animation: "spin 0.9s linear infinite",
+        }} />
+        <span style={{ color: "#64748b", fontSize: "14px" }}>Loading your classes...</span>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-red-500 text-center py-10">
-        Error: {error}. Please check your network or try logging in again.
-      </div>
-    );
-  }
-
-  if (filteredClasses.length === 0 && !loading && !error) {
-    return (
-      <div className="text-gray-500 text-center py-10">
-        No classes found matching your filter or in the system.
+      <div style={{
+        background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+        borderRadius: "12px", padding: "24px", textAlign: "center", color: "#ef4444",
+      }}>
+        {error}
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-        <h1 className="text-2xl font-bold">My Classes</h1>
-        <div className="flex gap-2 flex-wrap">
-          {["All", "Ongoing", "Completed"].map((type) => (
-            <button
-              key={type}
-              onClick={() => setFilter(type)}
-              className={`border px-4 py-1.5 rounded text-sm font-medium transition-all ${
-                filter === type
-                  ? "bg-blue-500 text-white shadow"
-                  : "hover:bg-gray-100 text-gray-700"
-              }`}
-            >
-              {type}
-            </button>
-          ))}
+    <div>
+      {/* Page Header */}
+      <div style={{ marginBottom: "28px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "6px" }}>
+          <div style={{
+            width: "36px", height: "36px",
+            background: "linear-gradient(135deg, #10b981, #059669)",
+            borderRadius: "10px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <BookOpen size={18} color="#fff" />
+          </div>
+          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#0f172a", margin: 0 }}>My Classes</h1>
         </div>
+        <p style={{ color: "#64748b", fontSize: "13px", margin: 0, marginLeft: "48px" }}>
+          View and manage all your enrolled classes
+        </p>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-200 text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border px-4 py-3 text-left">Class Name</th>
-              <th className="border px-4 py-3 text-left">Teacher</th>
-              <th className="border px-4 py-3 text-left">Schedule</th>
-              <th className="border px-4 py-3 text-center">Status</th>
-              <th className="border px-4 py-3 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredClasses.map((cls) => {
-              const displayStatus =
-                cls.status === "finished" ? "Completed" : (cls.status || "Ongoing");
+      {/* Filter Bar */}
+      <div style={{
+        background: "#fff",
+        borderRadius: "14px",
+        padding: "16px 20px",
+        marginBottom: "20px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+        border: "1px solid rgba(0,0,0,0.05)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Filter size={15} color="#94a3b8" />
+          <span style={{ color: "#64748b", fontSize: "13px", fontWeight: 500 }}>Filter:</span>
+          <div style={{ display: "flex", gap: "6px" }}>
+            {filterButtons.map((type) => (
+              <button
+                key={type}
+                onClick={() => setFilter(type)}
+                style={{
+                  padding: "5px 14px",
+                  borderRadius: "20px",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  transition: "all 0.2s",
+                  background: filter === type
+                    ? "linear-gradient(135deg, #10b981, #059669)"
+                    : "rgba(0,0,0,0.05)",
+                  color: filter === type ? "#fff" : "#64748b",
+                  boxShadow: filter === type ? "0 2px 8px rgba(16,185,129,0.3)" : "none",
+                }}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </div>
+        <span style={{
+          background: "rgba(16,185,129,0.1)",
+          color: "#059669",
+          fontSize: "12px", fontWeight: 600,
+          padding: "4px 10px", borderRadius: "20px",
+        }}>
+          {filteredClasses.length} class{filteredClasses.length !== 1 ? "es" : ""}
+        </span>
+      </div>
 
-              return (
-                <tr
-                  key={cls._id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <td className="border px-4 py-3 font-semibold text-blue-700">
-                    {cls.name}
-                  </td>
-                  <td className="border px-4 py-3">
-                    {Array.isArray(cls.teachers) && cls.teachers.length > 0
-                      ? cls.teachers
-                          .map((teacher) => teacher.fullName)
-                          .join(", ")
-                      : "N/A"}
-                  </td>
-                  <td className="border px-4 py-3">
-                    {Array.isArray(cls.schedule) && cls.schedule.length > 0 ? (
-                      <div>
-                        {cls.schedule.map((s, index) => (
-                          <div key={index}>
-                            {s.weekday}: {" "}
-                            {s.slot?.from && s.slot?.to
-                              ? `${s.slot.from} - ${s.slot.to}`
-                              : "Time N/A"}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      "No Schedule"
-                    )}
-                  </td>
-
-                  <td className="border px-4 py-3 text-center">
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-medium ${
-                        displayStatus.toLowerCase() === "ongoing"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-200 text-gray-600"
-                      }`}
-                    >
-                      {displayStatus}
-                    </span>
-                  </td>
-                  <td className="border px-4 py-3 text-center">
-                    <Link
-                      to={`/student/my-classes/${cls._id}`}
-                      className="text-blue-600 hover:underline text-sm"
-                    >
-                      View Details
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      {/* Table */}
+      <div style={{
+        background: "#fff",
+        borderRadius: "14px",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+        border: "1px solid rgba(0,0,0,0.05)",
+        overflow: "hidden",
+      }}>
+        {filteredClasses.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "60px 20px", color: "#94a3b8" }}>
+            <BookOpen size={40} style={{ marginBottom: "12px", opacity: 0.4 }} />
+            <p style={{ fontSize: "14px", margin: 0 }}>No classes found matching your filter</p>
+          </div>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+            <thead>
+              <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
+                {["Class Name", "Teacher", "Schedule", "Status", "Actions"].map((h, i) => (
+                  <th key={i} style={{
+                    padding: "13px 16px",
+                    textAlign: i >= 3 ? "center" : "left",
+                    fontWeight: 600, color: "#475569",
+                    fontSize: "11px", letterSpacing: "0.5px", textTransform: "uppercase",
+                  }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredClasses.map((cls, idx) => {
+                const displayStatus = cls.status === "finished" ? "Completed" : (cls.status || "Ongoing");
+                const isOngoing = displayStatus.toLowerCase() === "ongoing";
+                return (
+                  <tr
+                    key={cls._id}
+                    style={{
+                      borderBottom: idx < filteredClasses.length - 1 ? "1px solid #f1f5f9" : "none",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <td style={{ padding: "14px 16px" }}>
+                      <span style={{ fontWeight: 600, color: "#0f172a" }}>{cls.name}</span>
+                    </td>
+                    <td style={{ padding: "14px 16px", color: "#475569" }}>
+                      {Array.isArray(cls.teachers) && cls.teachers.length > 0
+                        ? cls.teachers.map((t) => t.fullName).join(", ")
+                        : "N/A"}
+                    </td>
+                    <td style={{ padding: "14px 16px", color: "#64748b" }}>
+                      {Array.isArray(cls.schedule) && cls.schedule.length > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                          {cls.schedule.map((s, index) => (
+                            <div key={index} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{
+                                background: "#e0f2fe", color: "#0284c7",
+                                fontSize: "10px", fontWeight: 600,
+                                padding: "1px 6px", borderRadius: "4px",
+                              }}>{s.weekday?.slice(0, 3)}</span>
+                              <span style={{ fontSize: "12px" }}>
+                                {s.slot?.from && s.slot?.to ? `${s.slot.from} - ${s.slot.to}` : "Time N/A"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : "No Schedule"}
+                    </td>
+                    <td style={{ padding: "14px 16px", textAlign: "center" }}>
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", gap: "5px",
+                        padding: "4px 10px", borderRadius: "20px",
+                        fontSize: "11px", fontWeight: 600,
+                        background: isOngoing ? "rgba(16,185,129,0.12)" : "rgba(100,116,139,0.1)",
+                        color: isOngoing ? "#059669" : "#64748b",
+                      }}>
+                        {isOngoing ? <CheckCircle size={10} /> : <Clock size={10} />}
+                        {displayStatus}
+                      </span>
+                    </td>
+                    <td style={{ padding: "14px 16px", textAlign: "center" }}>
+                      <Link
+                        to={`/student/my-classes/${cls._id}`}
+                        style={{
+                          display: "inline-flex", alignItems: "center", gap: "5px",
+                          padding: "5px 12px",
+                          background: "rgba(16,185,129,0.1)",
+                          color: "#059669",
+                          borderRadius: "8px",
+                          fontSize: "12px", fontWeight: 600,
+                          textDecoration: "none",
+                          transition: "all 0.15s",
+                          border: "1px solid rgba(16,185,129,0.2)",
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.background = "rgba(16,185,129,0.2)";
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = "rgba(16,185,129,0.1)";
+                        }}
+                      >
+                        <Eye size={12} /> View
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
